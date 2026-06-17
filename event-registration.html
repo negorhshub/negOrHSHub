@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Registration — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+      --t-rng:rgba(181,69,27,.14);
+      /* Event accent — warm amber */
+      --ev:   #d97706;
+      --ev-dk:#b45309;
+      --ev-lt:#fffbeb;
+      --ev-pal:#fef3c7;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#fffbeb 0%,#fff 55%,#fef9ee 100%); min-height:100vh; }
+
+    .step { display:none; animation:fs .3s ease; }
+    .step.active { display:block; }
+    @keyframes fs { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    .prog-track::before { content:''; position:absolute; top:14px; left:16px; right:16px; height:2px; background:var(--ev-pal); z-index:0; }
+    #prog-fill { position:absolute; top:14px; left:16px; height:2px; background:var(--ev); z-index:1; transition:width .4s ease; }
+    .pdot { position:relative; z-index:2; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; transition:all .3s; background:var(--ev-pal); color:var(--ev); }
+    .pdot.done { background:var(--ev); color:#fff; }
+    .pdot.curr { background:#fff; color:var(--ev); border:2px solid var(--ev); box-shadow:0 0 0 4px var(--ev-pal); }
+
+    .label  { display:block; font-size:.8rem; font-weight:500; color:#374151; margin-bottom:.25rem; }
+    .inp    { width:100%; padding:.625rem 1rem; border:1px solid #d1d5db; border-radius:.625rem; font-size:.875rem; outline:none; background:white; transition:border-color .15s,box-shadow .15s; }
+    .inp:focus { border-color:var(--ev); box-shadow:0 0 0 3px rgba(217,119,6,.14); }
+    .field-err { border-color:#ef4444!important; background:#fef2f2!important; }
+
+    .ccard { display:flex; align-items:flex-start; gap:.6rem; padding:.6rem .75rem; border:1px solid #e5e7eb; border-radius:.625rem; cursor:pointer; font-size:.8125rem; color:#374151; transition:border-color .15s,background .15s; }
+    .ccard:hover { border-color:var(--ev); background:var(--ev-lt); }
+    .ccard:has(input:checked) { border-color:var(--ev); background:var(--ev-lt); }
+    .ccard input { margin-top:1px; accent-color:var(--ev); flex-shrink:0; }
+
+    .radio-card { display:flex; align-items:flex-start; gap:.6rem; padding:.75rem; border:1px solid #e5e7eb; border-radius:.75rem; cursor:pointer; transition:border-color .15s,background .15s; }
+    .radio-card:hover { border-color:var(--ev); background:var(--ev-lt); }
+    .radio-card:has(input:checked) { border-color:var(--ev); background:var(--ev-lt); box-shadow:0 0 0 2px rgba(217,119,6,.18); }
+    .radio-card input { margin-top:2px; accent-color:var(--ev); flex-shrink:0; }
+
+    .btn-p { display:inline-flex; align-items:center; gap:.3rem; padding:.7rem 1.6rem; background:var(--ev); color:#fff; border-radius:.75rem; font-size:.875rem; font-weight:600; border:none; cursor:pointer; transition:background .15s,transform .1s; }
+    .btn-p:hover { background:var(--ev-dk); }
+    .btn-p:active { transform:scale(.97); }
+    .btn-p:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-bk { display:inline-flex; align-items:center; gap:.3rem; padding:.7rem 1.2rem; background:#fff; border:1px solid #e5e7eb; color:#4b5563; border-radius:.75rem; font-size:.875rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-bk:hover { background:#f9fafb; }
+    .btn-add { width:100%; display:flex; align-items:center; justify-content:center; gap:.5rem; padding:.625rem 1rem; margin-top:1rem; border:2px dashed #d97706; border-radius:.75rem; color:var(--ev); font-size:.875rem; font-weight:500; cursor:pointer; background:transparent; transition:border-color .15s,background .15s; }
+    .btn-add:hover { background:var(--ev-lt); }
+    .upload-zone { border:2px dashed #d97706; border-radius:.75rem; padding:1.5rem; text-align:center; cursor:pointer; background:var(--ev-lt); transition:border-color .15s; }
+    .upload-zone:hover { border-color:var(--ev-dk); }
+    .upload-zone.ok { border-color:#16a34a; background:#f0fdf4; }
+    .sec-lbl { font-size:.7rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.08em; margin-bottom:.65rem; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:1px solid var(--ev-pal)">
+  <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div>
+      <p class="font-bold leading-none" style="color:var(--t-dk)">NegOr HS Hub</p>
+      <p class="text-xs text-gray-400">Event Registration</p>
+    </div>
+  </div>
+</header>
+
+<!-- ─── EVENT BANNER ─── -->
+<div id="event-banner-wrap" class="max-w-2xl mx-auto px-4 mt-5">
+  <div id="event-banner" class="rounded-2xl shadow-sm"
+       style="background:var(--ev); padding:1.25rem 1.5rem; border-radius:1rem; color:white">
+    <p class="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">You're registering for</p>
+    <h2 id="ev-title" class="text-xl font-extrabold leading-tight"></h2>
+    <div class="mt-2 text-sm opacity-90 space-y-0.5">
+      <div id="ev-date-disp"></div>
+      <div id="ev-venue-disp"></div>
+      <div id="ev-fee-disp"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── IMPORTANT REMINDERS ─── -->
+<div id="event-reminders" class="hidden max-w-2xl mx-auto px-4 mt-4">
+  <div class="rounded-xl p-5 border-l-4" style="background:#fffbeb; border-color:var(--ev)">
+    <p class="text-base font-bold mb-2" style="color:#92400e">📋 Important Reminders</p>
+    <p id="ev-desc-text" class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"></p>
+  </div>
+</div>
+
+<!-- ═══ EVENT ERROR / PICKER SCREEN ═══ -->
+<div id="event-error" class="hidden max-w-sm mx-auto mt-12 px-4 text-center"></div>
+
+<!-- ═══ PROGRESS ═══ -->
+<div class="max-w-2xl mx-auto px-4 pt-5 pb-2 hidden" id="progress-area">
+  <div class="relative prog-track flex justify-between">
+    <div id="prog-fill" style="width:0%"></div>
+    <div id="pd1" class="pdot curr">1</div>
+    <div id="pd2" class="pdot">2</div>
+    <div id="pd3" class="pdot">3</div>
+    <div id="pd4" class="pdot">4</div>
+  </div>
+  <div class="flex justify-between mt-1 px-0.5">
+    <span class="text-xs text-gray-400">Attendees</span>
+    <span class="text-xs text-gray-400">Payment</span>
+    <span class="text-xs text-gray-400">Your Role</span>
+    <span class="text-xs text-gray-400">Submit</span>
+  </div>
+</div>
+
+<!-- ═══ FORM ═══ -->
+<div class="max-w-2xl mx-auto px-4 pb-16">
+
+  <div id="err-banner" class="hidden mt-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span id="err-txt"></span>
+  </div>
+
+  <form id="ev-form" class="hidden" novalidate>
+
+  <!-- ══ STEP 1: WHO'S COMING ══ -->
+  <div id="step-1" class="step active mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold text-gray-900">Who's Coming?</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Tell us which family members will be attending this event.</p>
+
+    <div class="space-y-4">
+      <!-- Family Name -->
+      <div>
+        <label class="label" for="familyName">Family Name <span class="text-red-500">*</span></label>
+        <input type="text" id="familyName" class="inp" placeholder="e.g., Santos, dela Cruz, Reyes" required />
+      </div>
+
+      <!-- Parents / Guardians attending -->
+      <div class="pt-3 border-t border-gray-100">
+        <p class="sec-lbl">Parents / Guardians Attending</p>
+        <div id="parents-wrap" class="space-y-3"></div>
+        <button type="button" class="btn-add" onclick="addParent()">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Another Parent / Guardian
+        </button>
+      </div>
+
+      <!-- Children attending -->
+      <div class="pt-3 border-t border-gray-100">
+        <p class="sec-lbl">Children Attending</p>
+        <p class="text-xs text-gray-400 mb-3">Leave this empty if no children are attending.</p>
+        <div id="children-wrap" class="space-y-3"></div>
+        <button type="button" class="btn-add" onclick="addChild()">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add a Child
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-end">
+      <button type="button" class="btn-p" onclick="goNext(1)">Next: Payment →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2: PAYMENT ══ -->
+  <div id="step-2" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold text-gray-900">Payment</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-4">Complete your registration payment and upload your proof.</p>
+
+    <!-- Disclaimer -->
+    <div class="rounded-xl px-4 py-3 mb-5 flex items-start gap-2.5 text-sm"
+         style="background:#fef9c3; border:1px solid #fde047">
+      <span class="text-base leading-none mt-0.5">⚠️</span>
+      <p class="text-yellow-800 leading-snug">
+        <strong>Please note:</strong> Registration fees are <strong>non-refundable</strong> but are
+        <strong>transferable</strong> — another family member or community participant may take your slot.
+        Contact a coordinator if you need to make a transfer.
+      </p>
+    </div>
+
+    <!-- Fee summary -->
+    <div id="fee-summary" class="rounded-xl p-4 mb-6 text-sm" style="background:var(--ev-lt); border:1px solid var(--ev-pal)"></div>
+
+    <!-- QR + instructions -->
+    <div class="rounded-2xl p-5 mb-5" style="border:2px solid #d97706; background:var(--ev-lt)">
+      <p class="text-sm font-bold mb-1" style="color:var(--ev-dk)">💳 Send Your Payment via GCash / InstaPay</p>
+      <div class="flex flex-col sm:flex-row items-center gap-5 mt-3">
+        <div class="text-center flex-shrink-0">
+          <div class="bg-white rounded-xl border border-gray-200 p-2 inline-block">
+            <img id="payment-qr-img" alt="GCash / InstaPay QR" class="w-40 h-40 object-contain" src="" />
+          </div>
+          <p class="text-xs text-gray-500 mt-1">GCash / InstaPay</p>
+          <p id="payee-name-disp" class="text-xs font-semibold mt-0.5" style="color:var(--ev)"></p>
+        </div>
+        <div class="flex-1 space-y-2">
+          <div class="flex items-start gap-2 text-sm text-gray-700"><span>1️⃣</span><span>Open your GCash or InstaPay banking app</span></div>
+          <div class="flex items-start gap-2 text-sm text-gray-700"><span>2️⃣</span><span>Scan the QR and send the <strong>registration fee</strong> shown above</span></div>
+          <div class="flex items-start gap-2 text-sm text-gray-700"><span>3️⃣</span><span>Screenshot your successful transfer confirmation</span></div>
+          <div class="flex items-start gap-2 text-sm text-gray-700"><span>4️⃣</span><span>Upload the screenshot below</span></div>
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div class="mt-5">
+        <label class="label">Upload Proof of Payment <span class="text-red-500">*</span></label>
+        <div id="upload-zone" class="upload-zone" onclick="document.getElementById('payment-file').click()">
+          <svg id="upload-icon" class="w-8 h-8 mx-auto mb-2" style="color:#d97706"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <p id="upload-lbl" class="text-sm font-medium" style="color:var(--ev)">Click to upload payment screenshot</p>
+          <p class="text-xs text-gray-400 mt-1">JPG, PNG, or PDF · Max 5 MB</p>
+        </div>
+        <input type="file" id="payment-file" accept="image/*,application/pdf" class="hidden" onchange="onFileSelect(this)" />
+      </div>
+    </div>
+
+    <!-- Excess handling -->
+    <div class="mb-6">
+      <p class="text-sm font-semibold text-gray-700 mb-1">💰 If You Overpaid or Have Remaining Balance</p>
+      <p class="text-xs text-gray-400 mb-3">What would you like us to do with any excess?</p>
+      <div class="space-y-2">
+        <label class="radio-card">
+          <input type="radio" name="excess" value="refund" checked />
+          <div>
+            <p class="text-sm font-medium text-gray-800">Refund to me</p>
+            <p class="text-xs text-gray-500">We'll coordinate with you to return any excess amount.</p>
+          </div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="excess" value="community-fund" />
+          <div>
+            <p class="text-sm font-medium text-gray-800">Donate to the Community Fund</p>
+            <p class="text-xs text-gray-500">Your excess goes toward shared community needs and future activities. 🙏</p>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Voluntary Contribution -->
+    <div class="rounded-xl p-4 mb-2" style="background:#f0fdf4; border:1px solid #bbf7d0">
+      <p class="text-sm font-semibold text-gray-800 mb-1">🤍 Voluntary Contribution <span class="text-gray-400 font-normal">(optional)</span></p>
+      <p class="text-xs text-gray-500 mb-3">Want to contribute a little extra to the community? No pressure — every bit helps, and we deeply appreciate it!</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label">Amount (₱) <span class="text-gray-400 font-normal">if any</span></label>
+          <input type="number" id="vol-amount" class="inp" placeholder="e.g., 50" min="0" step="1" />
+        </div>
+        <div>
+          <label class="label">Where to put it?</label>
+          <select id="vol-destination" class="inp bg-white">
+            <option value="">Select…</option>
+            <option>General Community Fund</option>
+            <option>Next Huddle Supplies</option>
+            <option>Scholarship / Financial Aid Fund</option>
+            <option>Wherever it's most needed</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-between">
+      <button type="button" class="btn-bk" onclick="goPrev(2)">← Back</button>
+      <button type="button" class="btn-p" onclick="goNext(2)">Next: Your Role →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3: ORGANIZING TEAM ══ -->
+  <div id="step-3" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold text-gray-900">Are You Part of the Team?</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Let us know if you're helping organize or facilitate this event.</p>
+
+    <label class="radio-card mb-3">
+      <input type="radio" name="org-role" value="attendee" checked />
+      <div>
+        <p class="text-sm font-medium text-gray-800">Just attending</p>
+        <p class="text-xs text-gray-500">We're coming to enjoy and participate!</p>
+      </div>
+    </label>
+    <label class="radio-card mb-3">
+      <input type="radio" name="org-role" value="volunteer" />
+      <div>
+        <p class="text-sm font-medium text-gray-800">Volunteer (day-of helper)</p>
+        <p class="text-xs text-gray-500">I'll help with setup, flow, or clean-up on the day of the event.</p>
+      </div>
+    </label>
+    <label class="radio-card mb-5">
+      <input type="radio" name="org-role" value="organizer" />
+      <div>
+        <p class="text-sm font-medium text-gray-800">Organizing / Coordinating Team</p>
+        <p class="text-xs text-gray-500">I'm involved in planning, logistics, or committee work for this event.</p>
+      </div>
+    </label>
+
+    <div>
+      <label class="label" for="org-notes">Notes to the organizing team <span class="text-gray-400 font-normal">(optional)</span></label>
+      <textarea id="org-notes" rows="2" class="inp resize-none"
+        placeholder="Anything we should know? Special requirements, dietary needs, early arrival, etc."></textarea>
+    </div>
+
+    <div class="mt-8 flex justify-between">
+      <button type="button" class="btn-bk" onclick="goPrev(3)">← Back</button>
+      <button type="button" class="btn-p" onclick="goNext(3)">Review & Submit →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 4: REVIEW & SUBMIT ══ -->
+  <div id="step-4" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold text-gray-900">Review Your Registration</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-5">Check the details below before submitting.</p>
+
+    <div id="review-box" class="rounded-xl p-5 mb-6 text-sm space-y-3"
+         style="background:var(--ev-lt); border:1px solid var(--ev-pal)"></div>
+
+    <label class="ccard items-start mb-6">
+      <input type="checkbox" id="consent-data" required />
+      <span class="text-sm text-gray-700 leading-snug">
+        <strong>Data Consent</strong> — I agree that the information I've provided will be stored by NegOr HS Hub
+        for event management purposes. <span class="text-red-500">*</span>
+      </span>
+    </label>
+
+    <div class="flex justify-between items-center">
+      <button type="button" class="btn-bk" onclick="goPrev(4)">← Back</button>
+      <button type="button" id="submit-btn" class="btn-p" onclick="submitForm()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Confirm Registration
+      </button>
+    </div>
+  </div>
+
+  </form>
+
+  <!-- ═══ SUCCESS ═══ -->
+  <div id="success-screen" class="hidden mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-2xl font-bold mb-2" style="color:var(--t-dk)">You're registered!</h2>
+    <p id="success-ev-name" class="text-gray-600 text-sm mb-1"></p>
+    <p id="success-id" class="text-xs text-gray-400 mb-5"></p>
+    <div class="rounded-xl p-4 text-sm" style="background:var(--ev-lt)">
+      <p style="color:var(--ev-dk)">A confirmation email has been sent to your contact email address.</p>
+      <p class="text-gray-500 text-xs mt-1">We can't wait to see you at the event!</p>
+    </div>
+    <a href="index.html" class="inline-block mt-5 text-sm font-medium" style="color:var(--t)">← Back to Hub</a>
+  </div>
+
+</div>
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script>
+// ─── APPS SCRIPT URL ────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+
+// ─── STATE ─────────────────────────────────────────────────
+let step = 1, pCount = 0, cCount = 0;
+const TOTAL = 4;
+let EVENT = null;  // loaded dynamically from Apps Script
+
+// ─── DATE / TIME HELPERS ────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '';
+  // d is "YYYY-MM-DD" from the sheet
+  const parts = d.split('-');
+  if (parts.length === 3) {
+    const dt = new Date(+parts[0], +parts[1]-1, +parts[2]);
+    return dt.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  }
+  return d; // fallback: return as-is (e.g. old free-text dates)
+}
+function fmtTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${m.toString().padStart(2,'0')} ${ampm}`;
+}
+
+// ─── INIT ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  const eventId = new URLSearchParams(window.location.search).get('event');
+
+  if (!eventId) {
+    showEventPicker();
+    return;
+  }
+
+  // Show loading state
+  document.getElementById('event-banner').innerHTML = `
+    <p class="text-white opacity-70 text-sm animate-pulse">Loading event details…</p>`;
+
+  try {
+    const params = new URLSearchParams({ action: 'getEvent', eventId });
+    const res  = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+    const data = await res.json();
+
+    if (!data.success) {
+      showEventError(data.status === 'Draft' ? 'draft' : data.status === 'Closed' ? 'closed' : 'not-found');
+      return;
+    }
+
+    // Map sheet keys to EVENT object
+    const ev = data.data;
+    EVENT = {
+      id:               ev['event_id']          || eventId,
+      title:            ev['event_title']        || 'Community Event',
+      date:             ev['event_date']         || '',
+      startTime:        ev['start_time']         || '',
+      endTime:          ev['end_time']           || '',
+      venue:            ev['venue']              || '',
+      fee:              parseFloat(ev['fee_(₱)'] || ev['fee'] || 0),
+      payeeName:        ev['payee_name']         || 'Debbie Uy Matiao',
+      description:      ev['description']        || '',
+      registrationType: ev['registration_type'] || 'per_family',
+      qrCodeUrl:        ev['qr_code_url']        || '',
+    };
+
+  } catch(err) {
+    showEventError('network');
+    return;
+  }
+
+  // ── Event banner ──
+  const dateStr  = fmtDate(EVENT.date);
+  const timeStr  = EVENT.startTime
+    ? (EVENT.endTime ? `${fmtTime(EVENT.startTime)} – ${fmtTime(EVENT.endTime)}` : fmtTime(EVENT.startTime))
+    : '';
+
+  document.getElementById('event-banner').innerHTML = `
+    <p class="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">You're registering for</p>
+    <h2 class="text-xl font-extrabold leading-tight">${EVENT.title}</h2>
+    <div class="mt-2 text-sm opacity-90 space-y-0.5">
+      ${dateStr ? `<div>📅 ${dateStr}${timeStr ? '&nbsp;&nbsp;⏰ ' + timeStr : ''}</div>` : ''}
+      ${EVENT.venue ? `<div>📍 ${EVENT.venue}</div>` : ''}
+    </div>`;
+
+  // ── Important Reminders ──
+  if (EVENT.description) {
+    document.getElementById('ev-desc-text').textContent = EVENT.description;
+    document.getElementById('event-reminders').classList.remove('hidden');
+  }
+
+  // ── Payment QR ──
+  const qrImg = document.getElementById('payment-qr-img');
+  if (EVENT.qrCodeUrl) {
+    qrImg.src = EVENT.qrCodeUrl;
+  } else {
+    qrImg.src = 'payment-qr.png';
+    qrImg.onerror = function() {
+      this.outerHTML = '<div class="w-40 h-40 flex items-center justify-center bg-gray-100 rounded-lg text-xs text-gray-400 text-center p-3">No QR set for this event.<br/>Contact your coordinator.</div>';
+    };
+  }
+  document.getElementById('payee-name-disp').textContent = EVENT.payeeName;
+
+  // ── Show form ──
+  document.getElementById('progress-area').classList.remove('hidden');
+  document.getElementById('ev-form').classList.remove('hidden');
+  addParent();
+  updateProg();
+  updateFee(); // initial fee summary
+});
+
+// ─── EVENT PICKER (no ?event= in URL) ───────────────────────
+async function showEventPicker() {
+  document.getElementById('event-banner-wrap').style.display = 'none';
+  document.getElementById('progress-area').classList.add('hidden');
+  document.getElementById('ev-form').classList.add('hidden');
+
+  const box = document.getElementById('event-error');
+  box.classList.remove('hidden');
+  box.innerHTML = `<p class="text-4xl mb-3 animate-pulse">📅</p>
+    <p class="text-sm text-gray-400">Loading available events…</p>`;
+
+  try {
+    const params = new URLSearchParams({ action: 'getActiveEvents' });
+    const res    = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+    const data   = await res.json();
+    const events = (data.success && data.data) ? data.data : [];
+
+    if (events.length === 0) {
+      box.innerHTML = `
+        <div class="text-5xl mb-4">📭</div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">No Open Events</h2>
+        <p class="text-sm text-gray-500 mb-6 max-w-xs mx-auto">There are no events open for registration right now. Ask your coordinator for the event registration link, or check back soon.</p>
+        <a href="index.html" class="inline-flex items-center gap-2 text-sm font-medium" style="color:var(--t)">← Back to Hub</a>`;
+      return;
+    }
+
+    if (events.length === 1) {
+      // Only one active event — load it automatically
+      const id = events[0]['event_id'];
+      window.location.search = '?event=' + id;
+      return;
+    }
+
+    // Multiple active events — show picker
+    box.classList.remove('max-w-sm');
+    box.classList.add('max-w-2xl');
+    box.innerHTML = `
+      <h2 class="text-xl font-bold text-gray-900 mb-1 text-left">Choose an Event</h2>
+      <p class="text-sm text-gray-500 mb-5 text-left">Select the event you'd like to register for.</p>
+      <div class="space-y-3 text-left">
+        ${events.map(ev => {
+          const id    = ev['event_id'];
+          const title = ev['event_title'] || 'Untitled Event';
+          const date  = ev['event_date']  ? fmtDate(ev['event_date']) : '';
+          const venue = ev['venue']       || '';
+          const fee   = ev['fee_(₱)']    ? '₱' + parseFloat(ev['fee_(₱)']).toLocaleString() : 'Free';
+          return `
+          <div onclick="window.location.search='?event=${id}'"
+               class="bg-white border border-gray-200 rounded-2xl p-5 cursor-pointer hover:border-[#B5451B] hover:shadow-sm transition-all">
+            <p class="font-bold text-gray-900 mb-1">${title}</p>
+            <p class="text-xs text-gray-500">
+              ${date ? '📅 ' + date + '  ' : ''}
+              ${venue ? '📍 ' + venue + '  ' : ''}
+              💳 ${fee}
+            </p>
+          </div>`;
+        }).join('')}
+      </div>
+      <a href="index.html" class="inline-flex items-center gap-2 text-sm font-medium mt-6" style="color:var(--t)">← Back to Hub</a>`;
+  } catch(err) {
+    document.getElementById('event-error').innerHTML = `
+      <div class="text-5xl mb-4">📡</div>
+      <h2 class="text-xl font-bold text-gray-900 mb-2">Connection Error</h2>
+      <p class="text-sm text-gray-500 mb-6 max-w-xs mx-auto">Could not load events. Check your internet connection and refresh.</p>
+      <a href="index.html" class="inline-flex items-center gap-2 text-sm font-medium" style="color:var(--t)">← Back to Hub</a>`;
+  }
+}
+
+function showEventError(reason) {
+  document.getElementById('event-banner-wrap').style.display = 'none';
+  document.getElementById('progress-area').classList.add('hidden');
+  document.getElementById('ev-form').classList.add('hidden');
+  document.getElementById('event-error').classList.remove('hidden');
+
+  const msgs = {
+    'no-id':    { icon:'🔗', title:'No Event Specified', body:'This registration link is incomplete. Please use the full link shared by your coordinator.' },
+    'not-found':{ icon:'🔍', title:'Event Not Found',    body:'This event could not be found. The link may be outdated. Please contact your coordinator.' },
+    'draft':    { icon:'🛠️', title:'Registration Not Open Yet', body:'This event is still being set up. Check back soon or ask your coordinator when registration opens.' },
+    'closed':   { icon:'🔒', title:'Registration Closed', body:'Registration for this event has closed. Contact your coordinator if you need assistance.' },
+    'network':  { icon:'📡', title:'Connection Error',   body:'Could not load event details. Please check your internet connection and refresh the page.' },
+  };
+  const m = msgs[reason] || msgs['not-found'];
+  document.getElementById('event-error').innerHTML = `
+    <div class="text-5xl mb-4">${m.icon}</div>
+    <h2 class="text-xl font-bold text-gray-900 mb-2">${m.title}</h2>
+    <p class="text-sm text-gray-500 mb-6 max-w-xs mx-auto">${m.body}</p>
+    <a href="index.html" class="inline-flex items-center gap-2 text-sm font-medium" style="color:var(--t)">← Back to Hub</a>`;
+}
+
+// ─── DYNAMIC ENTRIES ────────────────────────────────────────
+function addParent() {
+  pCount++;
+  const n = pCount;
+  const d = document.createElement('div');
+  d.id = `par-${n}`; d.className = 'border border-gray-200 rounded-xl p-4';
+  d.innerHTML = `
+    <div class="flex justify-between items-center mb-3">
+      <p class="text-sm font-semibold text-gray-700">Parent / Guardian ${n}</p>
+      ${n>1?`<button type="button" onclick="removeEl('par-${n}')" class="text-xs text-red-500 hover:text-red-700">✕ Remove</button>`:''}
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="label">Full Name <span class="text-red-500">*</span></label>
+        <input name="p_name" type="text" class="inp" placeholder="First Last" required/>
+      </div>
+      <div>
+        <label class="label">Contact Number</label>
+        <input name="p_phone" type="tel" class="inp" placeholder="09XXXXXXXXX"/>
+      </div>
+    </div>`;
+  document.getElementById('parents-wrap').appendChild(d);
+}
+
+function addChild() {
+  cCount++;
+  const n = cCount;
+  const d = document.createElement('div');
+  d.id = `chd-${n}`; d.className = 'border border-gray-200 rounded-xl p-4';
+  d.innerHTML = `
+    <div class="flex justify-between items-center mb-3">
+      <p class="text-sm font-semibold text-gray-700">Child ${n}</p>
+      <button type="button" onclick="removeEl('chd-${n}')" class="text-xs text-red-500 hover:text-red-700">✕ Remove</button>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="label">Child's Name <span class="text-red-500">*</span></label>
+        <input name="c_name" type="text" class="inp" placeholder="First name" required/>
+      </div>
+      <div>
+        <label class="label">Age <span class="text-red-500">*</span></label>
+        <input name="c_age" type="number" class="inp" placeholder="e.g., 8" min="0" max="25" required/>
+      </div>
+    </div>`;
+  document.getElementById('children-wrap').appendChild(d);
+}
+
+function removeEl(id) { document.getElementById(id)?.remove(); }
+
+// ─── FEE CALCULATION ────────────────────────────────────────
+function updateFee() {
+  if (!EVENT) return;
+  const adults   = document.querySelectorAll('#parents-wrap > div').length;
+  const kids     = document.querySelectorAll('#children-wrap > div').length;
+
+  let total = EVENT.fee;
+  let desc  = '';
+  let label = '';
+
+  switch (EVENT.registrationType) {
+    case 'per_adult':
+      total = EVENT.fee * adults;
+      desc  = `₱${EVENT.fee.toLocaleString()} × ${adults} adult${adults !== 1 ? 's' : ''}`;
+      label = `₱${EVENT.fee.toLocaleString()} per adult`;
+      break;
+    case 'per_child':
+      total = EVENT.fee * kids;
+      desc  = `₱${EVENT.fee.toLocaleString()} × ${kids} child${kids !== 1 ? 'ren' : ''}`;
+      label = `₱${EVENT.fee.toLocaleString()} per child`;
+      break;
+    case 'per_pax':
+      total = EVENT.fee * (adults + kids);
+      desc  = `₱${EVENT.fee.toLocaleString()} × ${adults + kids} pax`;
+      label = `₱${EVENT.fee.toLocaleString()} per person`;
+      break;
+    default: // per_family
+      total = EVENT.fee;
+      desc  = 'Flat fee per family';
+      label = `₱${EVENT.fee.toLocaleString()} per family`;
+  }
+
+  EVENT.totalFee = total;
+  EVENT.feeLabel = label;
+
+  document.getElementById('fee-summary').innerHTML = `
+    <p class="font-semibold text-gray-800 mb-2">Registration Fee</p>
+    <div class="flex items-center justify-between mb-1">
+      <span class="text-gray-600 text-sm">${desc}</span>
+      <span class="font-bold text-2xl" style="color:var(--ev)">₱${total.toLocaleString()}</span>
+    </div>
+    <p class="text-xs text-gray-400">Send to <strong>${EVENT.payeeName}</strong> via GCash or InstaPay</p>`;
+}
+
+// ─── NAVIGATION ─────────────────────────────────────────────
+function goNext(cur) {
+  if (!validate(cur)) return;
+  step = cur + 1;
+  if (step === 2) updateFee(); // recalculate when entering payment step
+  show(step);
+  if (step === 4) buildReview();
+  top0();
+}
+function goPrev(cur) { step = cur - 1; show(step); top0(); }
+
+function show(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  updateProg();
+}
+function top0() { window.scrollTo({top:0,behavior:'smooth'}); }
+
+function updateProg() {
+  for (let i=1; i<=TOTAL; i++) {
+    const d = document.getElementById('pd'+i);
+    d.classList.remove('done','curr');
+    if (i < step)     { d.classList.add('done'); d.innerHTML='✓'; }
+    else if (i===step){ d.classList.add('curr'); d.innerHTML=i; }
+    else              { d.innerHTML=i; }
+  }
+  document.getElementById('prog-fill').style.width = ((step-1)/(TOTAL-1)*100)+'%';
+}
+
+// ─── VALIDATION ─────────────────────────────────────────────
+function validate(n) {
+  clearErr();
+  const box = document.getElementById('step-'+n);
+  const reqs = box.querySelectorAll('[required]');
+  let ok = true;
+  reqs.forEach(el => {
+    el.classList.remove('field-err');
+    if (!el.value.trim()) {
+      el.classList.add('field-err');
+      el.addEventListener('input', () => el.classList.remove('field-err'), {once:true});
+      ok = false;
+    }
+  });
+  if (n===1 && !document.querySelector('#parents-wrap > div')) {
+    showErr('Please add at least one parent or guardian.'); return false;
+  }
+  if (!ok) {
+    showErr('Please fill in all required fields (highlighted in red).');
+    box.querySelector('.field-err')?.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  return ok;
+}
+
+// ─── FILE UPLOAD ─────────────────────────────────────────────
+function onFileSelect(input) {
+  const f = input.files[0]; if (!f) return;
+  if (f.size > 5*1024*1024) { showErr('File is too large. Max 5 MB.'); input.value=''; return; }
+  document.getElementById('upload-zone').classList.add('ok');
+  document.getElementById('upload-lbl').innerHTML =
+    `✅ <strong>${f.name}</strong> (${(f.size/1024).toFixed(0)} KB) — ready`;
+}
+
+async function toBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ─── REVIEW ──────────────────────────────────────────────────
+function buildReview() {
+  const parents  = [...document.querySelectorAll('#parents-wrap > div')].map(d=>d.querySelector('[name="p_name"]').value).filter(Boolean);
+  const children = [...document.querySelectorAll('#children-wrap > div')].map(d=>{
+    const nm = d.querySelector('[name="c_name"]').value;
+    const ag = d.querySelector('[name="c_age"]').value;
+    return nm ? `${nm} (age ${ag})` : null;
+  }).filter(Boolean);
+  const excess   = document.querySelector('input[name="excess"]:checked')?.value;
+  const orgRole  = document.querySelector('input[name="org-role"]:checked')?.value;
+  const volAmt   = document.getElementById('vol-amount').value;
+
+  const rows = [
+    ['Event',              EVENT.title],
+    ['Family',             g('familyName')],
+    ['Parents/Guardians',  parents.join(', ')||'—'],
+    children.length ? ['Children Attending', children.join(', ')] : null,
+    ['Registration Fee', `${EVENT.feeLabel} — Total: ₱${(EVENT.totalFee ?? EVENT.fee).toLocaleString()}`],
+    ['If Overpaid',        excess==='community-fund' ? 'Donate to Community Fund' : 'Refund to me'],
+    volAmt ? ['Voluntary Contribution', '₱'+parseInt(volAmt).toLocaleString()] : null,
+    ['Role at Event',      orgRole==='organizer'?'Organizing / Coordinating Team' : orgRole==='volunteer'?'Day-of Volunteer':'Attendee'],
+  ].filter(Boolean);
+
+  document.getElementById('review-box').innerHTML = rows.map(([k,v])=>`
+    <div>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">${k}</p>
+      <p class="text-gray-800 text-sm">${v}</p>
+    </div>`).join('');
+}
+
+// ─── DATA COLLECTION ─────────────────────────────────────────
+function collect() {
+  const parents  = [...document.querySelectorAll('#parents-wrap > div')].map(d=>({
+    name:  d.querySelector('[name="p_name"]').value.trim(),
+    phone: d.querySelector('[name="p_phone"]').value.trim(),
+  }));
+  const children = [...document.querySelectorAll('#children-wrap > div')].map(d=>({
+    name: d.querySelector('[name="c_name"]').value.trim(),
+    age:  d.querySelector('[name="c_age"]').value.trim(),
+  }));
+  return {
+    eventId:              EVENT.id,
+    eventTitle:           EVENT.title,
+    familyName:           g('familyName'),
+    parents, children,
+    excessHandling:       document.querySelector('input[name="excess"]:checked')?.value || 'refund',
+    voluntaryAmount:      document.getElementById('vol-amount').value || '0',
+    voluntaryDestination: document.getElementById('vol-destination').value || '',
+    organizingRole:       document.querySelector('input[name="org-role"]:checked')?.value || 'attendee',
+    notes:                g('org-notes'),
+    consentData:          document.getElementById('consent-data').checked,
+  };
+}
+
+// ─── SUBMISSION ──────────────────────────────────────────────
+async function submitForm() {
+  if (!document.getElementById('consent-data').checked) {
+    showErr('Please agree to the data consent before submitting.'); return;
+  }
+  const fileInput = document.getElementById('payment-file');
+  if (!fileInput.files || fileInput.files.length===0) {
+    showErr('Please upload your proof of payment before submitting.');
+    document.getElementById('upload-zone').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+  </svg> Submitting…`;
+
+  const payload = collect();
+
+  try {
+    const file = fileInput.files[0];
+    payload.paymentProof = { name:file.name, mimeType:file.type, base64: await toBase64(file) };
+  } catch(e) {
+    showErr('Could not read the uploaded file. Please try again.');
+    resetBtn(btn); return;
+  }
+
+  payload._type      = 'event';
+  payload.eventId    = EVENT.id;
+  payload.eventTitle = EVENT.title;
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('ev-form').classList.add('hidden');
+      document.getElementById('progress-area').classList.add('hidden');
+      document.getElementById('event-banner').classList.add('hidden');
+      document.getElementById('err-banner').classList.add('hidden');
+      document.getElementById('success-screen').classList.remove('hidden');
+      document.getElementById('success-ev-name').textContent = EVENT.title;
+      document.getElementById('success-id').textContent = 'Registration ID: ' + data.registrationId;
+      top0();
+    } else { throw new Error(data.error||'Submission failed'); }
+  } catch(err) {
+    resetBtn(btn);
+    showErr('Could not reach the server. Check your connection and try again. Your data is preserved.');
+    console.error(err);
+  }
+}
+
+function resetBtn(btn) {
+  btn.disabled = false;
+  btn.innerHTML = `<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    Confirm Registration`;
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────
+const g = id => (document.getElementById(id)?.value||'').trim();
+function showErr(m) {
+  document.getElementById('err-txt').textContent = m;
+  document.getElementById('err-banner').classList.remove('hidden');
+  setTimeout(() => document.getElementById('err-banner').classList.add('hidden'), 7000);
+}
+function clearErr() { document.getElementById('err-banner').classList.add('hidden'); }
+
+window.addEventListener('beforeunload', e => {
+  if (step > 1) { e.preventDefault(); e.returnValue=''; }
+});
+</script>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-12 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-3">Negros Oriental Homeschool Community · Est. 2023</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhomeschoolershub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr Homeschoolers Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

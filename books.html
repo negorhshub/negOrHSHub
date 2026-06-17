@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Exchange Repository — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+      --g:    #16a34a;
+      --g-lt: #f0fdf4;
+      --g-pal:#dcfce7;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#f0fdf4 0%,#fff 55%,#fdf5ef 100%); min-height:100vh; }
+    .inp { width:100%; padding:.625rem 1rem; border:1px solid #d1d5db; border-radius:.625rem; font-size:.875rem; outline:none; background:white; transition:border-color .15s, box-shadow .15s; }
+    .inp:focus { border-color:var(--g); box-shadow:0 0 0 3px rgba(22,163,74,.1); }
+    .inp-sm { padding:.45rem .75rem; border-radius:.5rem; }
+    .label { display:block; font-size:.8rem; font-weight:500; color:#374151; margin-bottom:.25rem; }
+    .btn-g { display:inline-flex; align-items:center; gap:.35rem; padding:.65rem 1.4rem; background:var(--g); color:#fff; border-radius:.75rem; font-size:.875rem; font-weight:600; border:none; cursor:pointer; transition:background .15s; }
+    .btn-g:hover { background:#15803d; }
+    .btn-g:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-sm { padding:.4rem .9rem; font-size:.78rem; border-radius:.5rem; }
+    .btn-outline { display:inline-flex; align-items:center; gap:.3rem; padding:.65rem 1.1rem; background:#fff; border:1px solid #d1d5db; color:#374151; border-radius:.75rem; font-size:.875rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-outline:hover { background:#f9fafb; }
+    .book-card { background:#fff; border:1px solid #e5e7eb; border-radius:1.25rem; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.05); transition:transform .15s,box-shadow .15s; }
+    .book-card:hover { transform:translateY(-2px); box-shadow:0 4px 16px rgba(22,163,74,.08); }
+    .badge { display:inline-block; padding:.2rem .6rem; border-radius:999px; font-size:.7rem; font-weight:600; }
+    .badge-avail { background:#dcfce7; color:#15803d; }
+    .badge-borrowed { background:#fef9c3; color:#a16207; }
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .modal-box { background:white; border-radius:1.25rem; width:100%; max-width:460px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+    select.inp option { background:white; }
+    .search-wrap { position:relative; }
+    .search-wrap input { padding-left:2.25rem; }
+    .search-wrap .search-icon { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); color:#9ca3af; pointer-events:none; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:1px solid var(--g-pal)">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div class="flex-1">
+      <p class="font-bold leading-none" style="color:var(--g)">Book Exchange Repository</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · Community Library</p>
+    </div>
+    <button onclick="openAddBookModal()"
+            class="btn-g btn-sm flex items-center gap-1.5 text-xs">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add a Book
+    </button>
+  </div>
+</header>
+
+<!-- ═══ HERO ═══ -->
+<div class="max-w-4xl mx-auto px-4 pt-8 pb-4 text-center">
+  <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--g-lt)">
+    <span class="text-2xl">📚</span>
+  </div>
+  <h1 class="text-2xl font-extrabold" style="color:var(--g)">Book Exchange Repository</h1>
+  <p class="text-sm text-gray-500 mt-1 max-w-md mx-auto">Share books you've outgrown. Find your next great read. Borrow from fellow homeschool families.</p>
+</div>
+
+<!-- ═══ SEARCH & FILTER ═══ -->
+<div class="max-w-4xl mx-auto px-4 pb-5">
+  <div class="flex flex-col sm:flex-row gap-2">
+    <div class="search-wrap flex-1">
+      <svg class="search-icon w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
+      </svg>
+      <input id="search-input" type="text" class="inp" placeholder="Search by title, author, or genre…" oninput="filterBooks()" />
+    </div>
+    <select id="status-filter" class="inp sm:w-40" onchange="filterBooks()">
+      <option value="">All Books</option>
+      <option value="Available">Available</option>
+      <option value="Borrowed">Borrowed</option>
+    </select>
+    <select id="genre-filter" class="inp sm:w-44" onchange="filterBooks()">
+      <option value="">All Genres</option>
+    </select>
+  </div>
+  <p id="book-count" class="text-xs text-gray-400 mt-2 ml-1"></p>
+</div>
+
+<!-- ═══ BOOK LIST ═══ -->
+<div class="max-w-4xl mx-auto px-4 pb-12">
+  <!-- Loading -->
+  <div id="books-loading" class="text-center py-16 text-gray-400">
+    <div class="text-4xl mb-2 animate-pulse">📖</div>
+    <p class="text-sm">Loading books…</p>
+  </div>
+  <!-- Empty -->
+  <div id="books-empty" class="hidden text-center py-16 text-gray-400">
+    <div class="text-4xl mb-3">📭</div>
+    <p class="font-medium text-gray-600 mb-1">No books yet</p>
+    <p class="text-sm mb-4">Be the first to share a book with the community!</p>
+    <button onclick="openAddBookModal()" class="btn-g btn-sm inline-flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add the First Book
+    </button>
+  </div>
+  <!-- No search results -->
+  <div id="books-no-results" class="hidden text-center py-16 text-gray-400">
+    <div class="text-4xl mb-3">🔍</div>
+    <p class="font-medium text-gray-600 mb-1">No matching books</p>
+    <p class="text-sm">Try a different search or filter.</p>
+  </div>
+  <!-- Grid -->
+  <div id="books-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+</div>
+
+<!-- ═══ BORROW REMINDER MODAL ═══ -->
+<div id="borrow-modal" class="modal-bg hidden">
+  <div class="modal-box p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:#fef9c3">📬</div>
+      <div>
+        <p class="font-bold text-gray-800">Before You Borrow</p>
+        <p class="text-xs text-gray-500" id="borrow-book-title"></p>
+      </div>
+    </div>
+    <div class="rounded-xl p-4 mb-4 text-sm" style="background:#f0fdf4; border:1px solid #bbf7d0">
+      <p class="font-semibold text-green-800 mb-1">📞 Contact the owner first!</p>
+      <p class="text-green-700 leading-relaxed">Reach out to <strong id="borrow-owner-name"></strong> at <strong id="borrow-owner-contact"></strong> to confirm the book is ready and arrange pick-up.</p>
+    </div>
+    <p class="text-sm text-gray-600 mb-4">Once you've arranged it with the owner, log your borrow below so other members know it's taken.</p>
+    <div class="space-y-3">
+      <div>
+        <label class="label">Your Name <span class="text-red-500">*</span></label>
+        <input id="borrow-name" type="text" class="inp" placeholder="Full name" />
+      </div>
+      <div>
+        <label class="label">Your Contact Number <span class="text-red-500">*</span></label>
+        <input id="borrow-contact" type="text" class="inp" placeholder="09xx-xxx-xxxx" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button id="borrow-confirm-btn" onclick="confirmBorrow()" class="btn-g flex-1">Log My Borrow</button>
+      <button onclick="closeBorrowModal()" class="btn-outline">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RETURN CONFIRM MODAL ═══ -->
+<div id="return-modal" class="modal-bg hidden">
+  <div class="modal-box p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:var(--g-lt)">↩️</div>
+      <div>
+        <p class="font-bold text-gray-800">Mark as Returned</p>
+        <p class="text-xs text-gray-500" id="return-book-title"></p>
+      </div>
+    </div>
+    <p class="text-sm text-gray-600 mb-5">Confirm that this book has been returned to the owner. The book will be marked as available again.</p>
+    <div class="flex gap-2">
+      <button id="return-confirm-btn" onclick="confirmReturn()" class="btn-g flex-1">Yes, Mark Returned</button>
+      <button onclick="closeReturnModal()" class="btn-outline">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADD BOOK MODAL ═══ -->
+<div id="add-book-modal" class="modal-bg hidden">
+  <div class="modal-box p-6">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:var(--g-lt)">📗</div>
+        <p class="font-bold text-gray-800">Share a Book</p>
+      </div>
+      <button onclick="closeAddBookModal()" class="text-gray-400 hover:text-gray-600 transition p-1 rounded-lg hover:bg-gray-100">✕</button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="label">Book Title <span class="text-red-500">*</span></label>
+        <input id="ab-title" type="text" class="inp" placeholder="e.g., Charlotte's Web" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label">Author</label>
+          <input id="ab-author" type="text" class="inp" placeholder="Author name" />
+        </div>
+        <div>
+          <label class="label">Genre</label>
+          <input id="ab-genre" type="text" class="inp" placeholder="e.g., Fiction, Science" />
+        </div>
+      </div>
+      <div>
+        <label class="label">Condition</label>
+        <select id="ab-condition" class="inp">
+          <option>Like New</option>
+          <option selected>Good</option>
+          <option>Fair</option>
+          <option>Worn but readable</option>
+        </select>
+      </div>
+      <div class="pt-1 pb-1">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Your Info (Owner)</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label">Your Name <span class="text-red-500">*</span></label>
+            <input id="ab-owner" type="text" class="inp" placeholder="Full name" />
+          </div>
+          <div>
+            <label class="label">Contact Number <span class="text-red-500">*</span></label>
+            <input id="ab-contact" type="text" class="inp" placeholder="09xx-xxx-xxxx" />
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="label">Notes (optional)</label>
+        <input id="ab-notes" type="text" class="inp" placeholder="e.g., Ages 8–12, great condition, has illustrations" />
+      </div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button id="ab-save-btn" onclick="saveBook()" class="btn-g flex-1">Share This Book</button>
+      <button onclick="closeAddBookModal()" class="btn-outline">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-4 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs text-gray-300 mb-3">💛 Created by Fibee</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr HS Hub Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+let allBooks    = [];
+let activeBorrowBookId = null;
+let activeReturnBookId = null;
+
+// ── LOAD ─────────────────────────────────────────────────────
+async function loadBooks() {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=getBooks');
+    const data = await res.json();
+    allBooks   = (data.success && data.data) ? data.data : [];
+    document.getElementById('books-loading').classList.add('hidden');
+    buildGenreFilter();
+    renderBooks(allBooks);
+  } catch(e) {
+    document.getElementById('books-loading').classList.add('hidden');
+    document.getElementById('books-empty').classList.remove('hidden');
+    document.getElementById('books-empty').innerHTML = `
+      <div class="text-4xl mb-3">📡</div>
+      <p class="font-medium text-gray-600 mb-1">Couldn't load books</p>
+      <p class="text-sm">Check your internet connection and refresh.</p>`;
+  }
+}
+
+function buildGenreFilter() {
+  const genres = [...new Set(allBooks.map(b => b.genre).filter(Boolean))].sort();
+  const sel = document.getElementById('genre-filter');
+  genres.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g; opt.textContent = g;
+    sel.appendChild(opt);
+  });
+}
+
+function renderBooks(books) {
+  const grid  = document.getElementById('books-grid');
+  const empty = document.getElementById('books-empty');
+  const noRes = document.getElementById('books-no-results');
+  const count = document.getElementById('book-count');
+
+  grid.classList.add('hidden');
+  empty.classList.add('hidden');
+  noRes.classList.add('hidden');
+
+  if (allBooks.length === 0) { empty.classList.remove('hidden'); return; }
+  if (books.length === 0)   { noRes.classList.remove('hidden'); return; }
+
+  count.textContent = `${books.length} book${books.length !== 1 ? 's' : ''} found`;
+  grid.classList.remove('hidden');
+  grid.innerHTML = books.map(b => {
+    const id        = b['book_id']        || '';
+    const title     = b['title']          || 'Untitled';
+    const author    = b['author']         || '';
+    const genre     = b['genre']          || '';
+    const condition = b['condition']      || '';
+    const owner     = b['owner_name']     || '';
+    const notes     = b['notes']          || '';
+    const holder    = b['current_holder'] || '';
+    const status    = b['status']         || 'Available';
+    const isAvail   = status.toLowerCase() === 'available';
+
+    return `
+    <div class="book-card">
+      <div class="p-5">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-gray-900 leading-tight text-base truncate">${title}</p>
+            ${author ? `<p class="text-xs text-gray-500 mt-0.5">by ${author}</p>` : ''}
+          </div>
+          <span class="badge ${isAvail ? 'badge-avail' : 'badge-borrowed'} flex-shrink-0">
+            ${isAvail ? '✓ Available' : '⏳ Borrowed'}
+          </span>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          ${genre     ? `<span class="badge" style="background:#e0f2fe;color:#0369a1">${genre}</span>` : ''}
+          ${condition ? `<span class="badge" style="background:#f1f5f9;color:#475569">${condition}</span>` : ''}
+        </div>
+
+        ${notes ? `<p class="text-xs text-gray-500 mb-3 leading-relaxed italic">"${notes}"</p>` : ''}
+
+        <div class="text-xs text-gray-500 border-t border-gray-100 pt-3 mt-auto">
+          <p>📦 Owned by <strong>${owner}</strong></p>
+          ${!isAvail && holder ? `<p class="mt-0.5">Currently with <strong>${holder}</strong></p>` : ''}
+        </div>
+      </div>
+
+      <div class="px-5 pb-4 flex gap-2">
+        ${isAvail
+          ? `<button onclick="openBorrowModal('${id}')"
+                     class="btn-g btn-sm flex-1 justify-center">
+               📚 Borrow
+             </button>`
+          : `<button onclick="openReturnModal('${id}')"
+                     class="text-xs font-semibold px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition flex-1 text-center cursor-pointer">
+               ↩️ Mark Returned
+             </button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterBooks() {
+  const q      = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('status-filter').value.toLowerCase();
+  const genre  = document.getElementById('genre-filter').value.toLowerCase();
+
+  const filtered = allBooks.filter(b => {
+    const matchQ = !q ||
+      (b['title']  || '').toLowerCase().includes(q) ||
+      (b['author'] || '').toLowerCase().includes(q) ||
+      (b['genre']  || '').toLowerCase().includes(q);
+    const matchStatus = !status || (b['status'] || 'available').toLowerCase() === status;
+    const matchGenre  = !genre  || (b['genre']  || '').toLowerCase() === genre;
+    return matchQ && matchStatus && matchGenre;
+  });
+  renderBooks(filtered);
+}
+
+// ── BORROW ────────────────────────────────────────────────────
+function openBorrowModal(bookId) {
+  const book = allBooks.find(b => b['book_id'] === bookId);
+  if (!book) return;
+  activeBorrowBookId = bookId;
+  document.getElementById('borrow-book-title').textContent = book['title'];
+  document.getElementById('borrow-owner-name').textContent    = book['owner_name']    || 'the owner';
+  document.getElementById('borrow-owner-contact').textContent = book['owner_contact'] || '(see group)';
+  document.getElementById('borrow-name').value    = '';
+  document.getElementById('borrow-contact').value = '';
+  document.getElementById('borrow-modal').classList.remove('hidden');
+}
+function closeBorrowModal() {
+  activeBorrowBookId = null;
+  document.getElementById('borrow-modal').classList.add('hidden');
+}
+
+async function confirmBorrow() {
+  const name    = document.getElementById('borrow-name').value.trim();
+  const contact = document.getElementById('borrow-contact').value.trim();
+  if (!name)    return alert('⚠️ Please enter your name.');
+  if (!contact) return alert('⚠️ Please enter your contact number.');
+
+  const btn = document.getElementById('borrow-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Logging…';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ _type:'borrowBook', bookId:activeBorrowBookId, borrowerName:name, borrowerContact:contact }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeBorrowModal();
+      await loadBooks();
+      alert('✅ Borrow logged! Enjoy the book — and don\'t forget to return it 😊');
+    } else {
+      alert('Error: ' + (data.error || 'Could not log borrow.'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Log My Borrow'; }
+}
+
+// ── RETURN ────────────────────────────────────────────────────
+function openReturnModal(bookId) {
+  const book = allBooks.find(b => b['book_id'] === bookId);
+  if (!book) return;
+  activeReturnBookId = bookId;
+  document.getElementById('return-book-title').textContent = book['title'];
+  document.getElementById('return-modal').classList.remove('hidden');
+}
+function closeReturnModal() {
+  activeReturnBookId = null;
+  document.getElementById('return-modal').classList.add('hidden');
+}
+
+async function confirmReturn() {
+  const btn = document.getElementById('return-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Updating…';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ _type:'returnBook', bookId:activeReturnBookId }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeReturnModal();
+      await loadBooks();
+      alert('✅ Book marked as returned!');
+    } else {
+      alert('Error: ' + (data.error || 'Could not mark returned.'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Yes, Mark Returned'; }
+}
+
+// ── ADD BOOK ──────────────────────────────────────────────────
+function openAddBookModal() {
+  ['ab-title','ab-author','ab-genre','ab-owner','ab-contact','ab-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('ab-condition').value = 'Good';
+  document.getElementById('add-book-modal').classList.remove('hidden');
+}
+function closeAddBookModal() {
+  document.getElementById('add-book-modal').classList.add('hidden');
+}
+
+async function saveBook() {
+  const title   = document.getElementById('ab-title').value.trim();
+  const owner   = document.getElementById('ab-owner').value.trim();
+  const contact = document.getElementById('ab-contact').value.trim();
+  if (!title)   return alert('⚠️ Book title is required.');
+  if (!owner)   return alert('⚠️ Your name is required.');
+  if (!contact) return alert('⚠️ Your contact number is required.');
+
+  const btn = document.getElementById('ab-save-btn');
+  btn.disabled = true; btn.textContent = 'Adding…';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        _type:        'addBook',
+        title:        title,
+        author:       document.getElementById('ab-author').value.trim(),
+        genre:        document.getElementById('ab-genre').value.trim(),
+        condition:    document.getElementById('ab-condition').value,
+        ownerName:    owner,
+        ownerContact: contact,
+        notes:        document.getElementById('ab-notes').value.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeAddBookModal();
+      await loadBooks();
+      alert('✅ Book added! Thank you for sharing!');
+    } else {
+      alert('Error: ' + (data.error || 'Could not add book.'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Share This Book'; }
+}
+
+// Close modals on backdrop click
+['borrow-modal','return-modal','add-book-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === e.currentTarget) {
+      if (id === 'borrow-modal') closeBorrowModal();
+      if (id === 'return-modal') closeReturnModal();
+      if (id === 'add-book-modal') closeAddBookModal();
+    }
+  });
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+loadBooks();
+</script>
+
+</body>
+</html>

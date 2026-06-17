@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organizer Checklist — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --b:    #2563eb;
+      --b-lt: #eff6ff;
+      --b-pl: #dbeafe;
+    }
+    * { box-sizing: border-box; }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#eff6ff 0%,#fff 55%,#fdf5ef 100%); min-height:100vh; }
+
+    /* Role picker */
+    .role-btn { border:2px solid transparent; border-radius:1.25rem; padding:1.5rem 1.25rem;
+                background:#fff; cursor:pointer; text-align:center; transition:all .2s;
+                box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .role-btn:hover { border-color:#2563eb; background:#eff6ff; }
+    .role-btn.active { border-color:#2563eb; background:#eff6ff; }
+
+    /* Phase header */
+    .phase-header { display:flex; align-items:center; gap:.75rem; padding:.5rem 0;
+                    font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+                    color:#6b7280; margin-top:1.5rem; margin-bottom:.5rem; }
+    .phase-header::after { content:''; flex:1; height:1px; background:#e5e7eb; }
+
+    /* Checklist item */
+    .chk-item { display:flex; align-items:flex-start; gap:.75rem; padding:.75rem 1rem;
+                background:#fff; border:1px solid #e5e7eb; border-radius:.875rem; cursor:pointer;
+                transition:all .15s; }
+    .chk-item:hover { border-color:#93c5fd; background:#f8faff; }
+    .chk-item.done { background:#f8faff; opacity:.7; }
+    .chk-item.done .chk-label { text-decoration:line-through; color:#9ca3af; }
+    .chk-box { width:1.25rem; height:1.25rem; border:2px solid #d1d5db; border-radius:.375rem;
+               flex-shrink:0; margin-top:.1rem; display:flex; align-items:center; justify-content:center;
+               transition:all .15s; }
+    .chk-item.done .chk-box { background:#2563eb; border-color:#2563eb; }
+    .chk-label { font-size:.875rem; font-weight:500; color:#111827; }
+    .chk-note  { font-size:.75rem; color:#6b7280; margin-top:.15rem; }
+
+    /* Progress bar */
+    .prog-bar { height:.5rem; background:#e5e7eb; border-radius:999px; overflow:hidden; }
+    .prog-fill { height:100%; background:linear-gradient(90deg,#3b82f6,#2563eb); border-radius:999px;
+                 transition:width .4s cubic-bezier(.4,0,.2,1); }
+
+    /* Workflow guide */
+    .guide-step { border-left:2px solid #93c5fd; padding:.75rem .75rem .75rem 1.25rem; margin-bottom:.75rem; }
+    .guide-step-title { font-weight:700; font-size:.8rem; color:#1e40af; margin-bottom:.25rem; }
+    .guide-step p { font-size:.8rem; color:#374151; }
+
+    /* Print styles */
+    @media print {
+      body { background:#fff !important; }
+      #role-picker-section, #guide-toggle-btn, #reset-btn,
+      header, footer, .no-print { display:none !important; }
+      .chk-item { border:none; padding:.4rem 0; }
+      .phase-header { margin-top:1rem; }
+      .chk-box { border:1.5px solid #999; }
+      .chk-item.done .chk-box { background:#2563eb; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20 no-print" style="border-bottom:1px solid var(--b-pl)">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div class="flex-1">
+      <p class="font-bold leading-none" style="color:var(--b)">Organizer Checklist</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · Role-based guides</p>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ ROLE PICKER ═══ -->
+<div id="role-picker-section" class="max-w-3xl mx-auto px-4 pt-8 pb-4">
+  <div class="text-center mb-6">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--b-lt)">
+      <span class="text-2xl">✅</span>
+    </div>
+    <h1 class="text-2xl font-extrabold" style="color:var(--b)">Organizer Checklist</h1>
+    <p class="text-sm text-gray-500 mt-1">Choose your role to see the right checklist.</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+    <button class="role-btn" onclick="selectRole('coordinator')">
+      <div class="text-3xl mb-2">🗂️</div>
+      <div class="font-bold text-gray-900 text-sm">Term Coordinator</div>
+      <div class="text-xs text-gray-500 mt-1">Manages the whole term — events, budget, communications</div>
+    </button>
+    <button class="role-btn" onclick="selectRole('volunteer')">
+      <div class="text-3xl mb-2">🙋</div>
+      <div class="font-bold text-gray-900 text-sm">Huddle Volunteer</div>
+      <div class="text-xs text-gray-500 mt-1">Helps run a specific event or activity</div>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ CHECKLIST SECTION ═══ -->
+<div id="checklist-section" class="hidden max-w-3xl mx-auto px-4 pb-16">
+
+  <!-- Top bar -->
+  <div class="flex items-center gap-3 mb-4 flex-wrap no-print">
+    <button onclick="resetRole()" class="text-xs text-blue-600 font-semibold flex items-center gap-1 hover:underline">
+      ← Change role
+    </button>
+    <div class="flex-1"></div>
+    <button id="guide-toggle-btn" onclick="toggleGuide()"
+            class="text-xs px-3 py-1.5 rounded-lg font-semibold border border-blue-200 text-blue-600 hover:bg-blue-50 transition">
+      📖 Show workflow guide
+    </button>
+    <button onclick="window.print()"
+            class="text-xs px-3 py-1.5 rounded-lg font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+      🖨 Print reference
+    </button>
+    <button id="reset-btn" onclick="resetChecklist()"
+            class="text-xs px-3 py-1.5 rounded-lg font-semibold border border-red-100 text-red-500 hover:bg-red-50 transition">
+      ↺ Reset
+    </button>
+  </div>
+
+  <!-- Role title -->
+  <div id="role-title" class="mb-4">
+    <h2 id="role-heading" class="text-xl font-extrabold text-gray-900"></h2>
+    <p id="role-sub" class="text-xs text-gray-500 mt-0.5"></p>
+  </div>
+
+  <!-- Volunteer: event picker -->
+  <div id="event-picker-wrap" class="hidden mb-5 no-print">
+    <label class="block text-xs font-semibold text-gray-600 mb-1">Which event is this for?</label>
+    <select id="event-picker" onchange="onEventPick()"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+      <option value="">— Select event —</option>
+    </select>
+    <p class="text-xs text-gray-400 mt-1">Your progress is saved per event.</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="mb-5">
+    <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+      <span id="prog-label">0 of 0 done</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="prog-bar"><div id="prog-fill" class="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Workflow guide (collapsible) -->
+  <div id="guide-panel" class="hidden mb-6 rounded-2xl overflow-hidden no-print"
+       style="background:#eff6ff; border:1px solid #dbeafe">
+    <div class="px-5 py-3 border-b border-blue-100">
+      <h3 class="font-bold text-blue-900 text-sm">📖 Workflow Guide</h3>
+      <p id="guide-intro" class="text-xs text-blue-700 mt-0.5"></p>
+    </div>
+    <div id="guide-steps" class="px-5 py-4 space-y-1"></div>
+  </div>
+
+  <!-- Checklist items -->
+  <div id="checklist-items"></div>
+
+  <!-- All done banner -->
+  <div id="all-done" class="hidden mt-6 text-center py-8 rounded-2xl"
+       style="background:#eff6ff; border:1px solid #bfdbfe">
+    <div class="text-4xl mb-2">🎉</div>
+    <p class="font-bold text-blue-900">You're all set!</p>
+    <p class="text-sm text-blue-700 mt-1">Everything on this checklist is complete.</p>
+  </div>
+
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-4 py-8 border-t border-gray-100 bg-white no-print">
+  <div class="max-w-3xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs text-gray-300">💛 Created by Fibee</p>
+  </div>
+</footer>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+
+/* ─── CHECKLIST DEFINITIONS ──────────────────────────────────────── */
+
+const COORD_CHECKLIST = {
+  role: 'coordinator',
+  heading: '🗂️ Term Coordinator Checklist',
+  sub: 'Term-level responsibilities — planning, budget, communications, and wrap-up',
+  guideIntro: 'Your role spans the whole term. Here\'s what to focus on at each stage.',
+  guide: [
+    {
+      title: '📋 Start of Term',
+      body: 'Meet with co-coordinators, confirm the term theme, create the term calendar, and set up shared documents (Drive folder, group chat). Announce the term plan in the Facebook group early so families can plan ahead.'
+    },
+    {
+      title: '📅 During Term — Per Event',
+      body: 'For each huddle: create the event in the Hub, promote it 2 weeks out, coordinate with the Huddle Volunteer team, track registrations, and handle payment queries. Keep the group updated after each event.'
+    },
+    {
+      title: '📊 Between Huddles',
+      body: 'Follow up on unpaid registrations, update the budget tracker, check the Book Exchange log, and respond to member questions. Coordinate with topic volunteers for upcoming events.'
+    },
+    {
+      title: '🏁 End of Term',
+      body: 'Collect feedback from families and volunteers. Submit the end-of-term report to the core team. Archive the term drive folder and hand off notes to the incoming coordinator.'
+    }
+  ],
+  phases: [
+    {
+      label: '📋 Start of Term',
+      items: [
+        { id:'c01', label:'Meet co-coordinators and confirm term plan', note:'Align on theme, schedule, and responsibilities' },
+        { id:'c02', label:'Create the term calendar (dates + event types)', note:'Share with core team for approval' },
+        { id:'c03', label:'Set up shared Drive folder for the term', note:'Subfolders: Events, Finance, Photos, Resources' },
+        { id:'c04', label:'Announce term plan in the FB group', note:'Include dates and how to register' },
+        { id:'c05', label:'Confirm Huddle Volunteer teams per event', note:'At least 2 volunteers per event' }
+      ]
+    },
+    {
+      label: '📅 Per-Event Setup',
+      items: [
+        { id:'c06', label:'Create event in the Hub (Event Setup page)', note:'Include venue, fee, registration type, Drive folder link' },
+        { id:'c07', label:'Prepare and post event announcement on Facebook', note:'2 weeks before; include registration link' },
+        { id:'c08', label:'Brief the Huddle Volunteer team', note:'Share checklist, venue contact, and logistics' },
+        { id:'c09', label:'Prepare payment QR code + track registrations', note:'Check Admin Dashboard before the event' },
+        { id:'c10', label:'Confirm venue, headcount, and materials list', note:'3 days before the event' }
+      ]
+    },
+    {
+      label: '📆 During Term',
+      items: [
+        { id:'c11', label:'Follow up on unpaid registrations', note:'Use Admin Dashboard → mark paid when confirmed' },
+        { id:'c12', label:'Post event reminders (1 week + 1 day before)', note:'Tag the FB group and group chat' },
+        { id:'c13', label:'Update budget tracker after each event', note:'Income (fees collected) and expenses' },
+        { id:'c14', label:'Publish Recap Corner post after each event', note:'Use the Recap Corner page; include sections + photos' },
+        { id:'c15', label:'Add event photo folder URL in Event Setup', note:'So the Photo Archive page shows the Drive link' }
+      ]
+    },
+    {
+      label: '🏁 End of Term',
+      items: [
+        { id:'c16', label:'Collect feedback from families and volunteers', note:'Google Form or FB poll' },
+        { id:'c17', label:'Write and submit end-of-term report', note:'Attendance totals, highlights, budget summary' },
+        { id:'c18', label:'Archive Drive folder and label it clearly', note:'e.g. "Term 3 AY 2025–2026"' },
+        { id:'c19', label:'Hand off to incoming coordinator', note:'Share notes, login credentials, ongoing issues' },
+        { id:'c20', label:'Thank the volunteer team 🙏', note:'Post appreciation in the group' }
+      ]
+    }
+  ]
+};
+
+const VOL_CHECKLIST = {
+  role: 'volunteer',
+  heading: '🙋 Huddle Volunteer Checklist',
+  sub: 'Event-specific tasks — what to do before, during, and after your assigned huddle',
+  guideIntro: 'As a Huddle Volunteer, your job is to make the event run smoothly on the day. Here\'s the flow.',
+  guide: [
+    {
+      title: '📅 2–3 Weeks Before',
+      body: 'Confirm your role with the Term Coordinator (logistics, registration desk, program flow, photography, etc.). Review the event details, venue, and expected attendance. Prepare any materials you\'re responsible for.'
+    },
+    {
+      title: '🗓 Week Before',
+      body: 'Do a final check-in with the coordinator. Confirm headcount, finalize your role, and prepare printed materials (name tags, sign-in sheets, programs). Check that the venue is confirmed and accessible.'
+    },
+    {
+      title: '🎉 Day of Event',
+      body: 'Arrive 30–45 minutes early. Set up the registration desk, welcome families, manage the sign-in sheet, help with program flow, assist speakers/facilitators. Keep things warm and welcoming!'
+    },
+    {
+      title: '✅ After the Event',
+      body: 'Help with pack-up, submit your attendance count to the coordinator. Upload your photos to the Drive folder. Share quick feedback — what worked, what could improve.'
+    }
+  ],
+  phases: [
+    {
+      label: '📅 2–3 Weeks Before',
+      items: [
+        { id:'v01', label:'Confirm your volunteer role with the Term Coordinator', note:'e.g. registration, program flow, venue setup, photography' },
+        { id:'v02', label:'Review event details (date, time, venue, fee, format)', note:'Check the Events page for full info' },
+        { id:'v03', label:'Know your assigned tasks and who to coordinate with', note:'Ask the coordinator for the volunteer brief' },
+        { id:'v04', label:'Prepare any materials you\'re responsible for', note:'e.g. activity supplies, name tag blanks, printed programs' }
+      ]
+    },
+    {
+      label: '🗓 Week Before',
+      items: [
+        { id:'v05', label:'Final check-in with Term Coordinator', note:'Confirm headcount, any last-minute changes' },
+        { id:'v06', label:'Print sign-in sheets and name tags', note:'Bring extras — some families register on the day' },
+        { id:'v07', label:'Confirm venue access and setup instructions', note:'Who has the key? Is there parking? A/V equipment?' },
+        { id:'v08', label:'Remind assigned helpers of their tasks', note:'Send a reminder the day before via group chat' }
+      ]
+    },
+    {
+      label: '🎉 Day of Event',
+      items: [
+        { id:'v09', label:'Arrive 30–45 minutes early', note:'Early setup prevents last-minute stress' },
+        { id:'v10', label:'Set up registration desk and welcome area', note:'Sign-in sheet, name tags, fee collection materials' },
+        { id:'v11', label:'Welcome families and assist with registration', note:'Mark attendance, collect fees, hand out name tags' },
+        { id:'v12', label:'Assist with program flow (intro, transitions, closing)', note:'Coordinate with speaker/facilitator' },
+        { id:'v13', label:'Take photos throughout the event', note:'Candid + group shots; upload to Drive folder after' },
+        { id:'v14', label:'Keep the event on schedule', note:'Give 10-min heads-up to facilitator before wrap-up' }
+      ]
+    },
+    {
+      label: '✅ After the Event',
+      items: [
+        { id:'v15', label:'Help with pack-up and venue cleanup', note:'Leave the space better than you found it' },
+        { id:'v16', label:'Submit attendance count to the Term Coordinator', note:'Total families + children who attended' },
+        { id:'v17', label:'Upload photos to the event\'s Drive folder', note:'Find the folder link on the Photo Archive page' },
+        { id:'v18', label:'Share feedback with the coordinator', note:'2–3 things that went well + 1 thing to improve' }
+      ]
+    }
+  ]
+};
+
+/* ─── STATE ──────────────────────────────────────────────────────── */
+var currentRole  = null;
+var currentEvent = null;
+var checklist    = [];
+var guideVisible = false;
+var events       = [];
+
+/* ─── ROLE ────────────────────────────────────────────────────────── */
+function selectRole(role) {
+  currentRole = role;
+  document.getElementById('role-picker-section').classList.add('hidden');
+  document.getElementById('checklist-section').classList.remove('hidden');
+
+  var def = role === 'coordinator' ? COORD_CHECKLIST : VOL_CHECKLIST;
+  document.getElementById('role-heading').textContent = def.heading;
+  document.getElementById('role-sub').textContent     = def.sub;
+  document.getElementById('guide-intro').textContent  = def.guideIntro;
+
+  buildGuide(def);
+
+  if (role === 'volunteer') {
+    document.getElementById('event-picker-wrap').classList.remove('hidden');
+    loadEvents();
+  } else {
+    document.getElementById('event-picker-wrap').classList.add('hidden');
+    buildChecklist('TERM');
+  }
+}
+
+function resetRole() {
+  currentRole  = null;
+  currentEvent = null;
+  checklist    = [];
+  guideVisible = false;
+  document.getElementById('guide-panel').classList.add('hidden');
+  document.getElementById('guide-toggle-btn').textContent = '📖 Show workflow guide';
+  document.getElementById('checklist-section').classList.add('hidden');
+  document.getElementById('role-picker-section').classList.remove('hidden');
+}
+
+/* ─── EVENTS (volunteer) ─────────────────────────────────────────── */
+async function loadEvents() {
+  try {
+    var res  = await fetch(APPS_SCRIPT_URL + '?action=getActiveEvents');
+    var data = await res.json();
+    events = (data.success && data.data) ? data.data : [];
+    var sel = document.getElementById('event-picker');
+    sel.innerHTML = '<option value="">— Select event —</option>';
+    events.forEach(function(ev) {
+      var opt = document.createElement('option');
+      opt.value       = ev['event_id'] || ev['id'] || '';
+      opt.textContent = (ev['event_title'] || 'Event') +
+                        (ev['event_date'] ? '  ·  ' + fmtDateShort(ev['event_date']) : '');
+      sel.appendChild(opt);
+    });
+  } catch(e) { /* ignore, checklist still works without events */ }
+}
+
+function onEventPick() {
+  var sel = document.getElementById('event-picker');
+  currentEvent = sel.value || null;
+  if (currentEvent) buildChecklist('EVENT-' + currentEvent);
+  else {
+    document.getElementById('checklist-items').innerHTML = '';
+    updateProgress();
+  }
+}
+
+/* ─── CHECKLIST BUILD ────────────────────────────────────────────── */
+function buildChecklist(storageKey) {
+  var def   = currentRole === 'coordinator' ? COORD_CHECKLIST : VOL_CHECKLIST;
+  var saved = loadProgress(storageKey);
+
+  checklist = [];
+  def.phases.forEach(function(phase) {
+    phase.items.forEach(function(item) {
+      checklist.push({
+        id: item.id, label: item.label, note: item.note,
+        phase: phase.label, done: !!(saved && saved[item.id])
+      });
+    });
+  });
+
+  renderChecklist();
+  updateProgress(storageKey);
+}
+
+function renderChecklist() {
+  var container = document.getElementById('checklist-items');
+  var html      = '';
+  var lastPhase = null;
+
+  checklist.forEach(function(item, idx) {
+    if (item.phase !== lastPhase) {
+      lastPhase = item.phase;
+      html += '<div class="phase-header">' + escHtml(item.phase) + '</div>';
+    }
+    var checkSvg = item.done
+      ? '<svg class="w-3 h-3" style="color:#fff" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>'
+      : '';
+    html +=
+      '<div class="chk-item ' + (item.done ? 'done' : '') + ' mb-2" onclick="toggleItem(' + idx + ')">' +
+        '<div class="chk-box">' + checkSvg + '</div>' +
+        '<div>' +
+          '<div class="chk-label">' + escHtml(item.label) + '</div>' +
+          (item.note ? '<div class="chk-note">' + escHtml(item.note) + '</div>' : '') +
+        '</div>' +
+      '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleItem(idx) {
+  checklist[idx].done = !checklist[idx].done;
+  var storageKey = currentRole === 'coordinator' ? 'TERM' : ('EVENT-' + (currentEvent || 'none'));
+  saveProgress(storageKey);
+  renderChecklist();
+  updateProgress(storageKey);
+}
+
+function resetChecklist() {
+  if (!confirm('Reset all items on this checklist?')) return;
+  checklist.forEach(function(item) { item.done = false; });
+  var storageKey = currentRole === 'coordinator' ? 'TERM' : ('EVENT-' + (currentEvent || 'none'));
+  saveProgress(storageKey);
+  renderChecklist();
+  updateProgress(storageKey);
+}
+
+/* ─── PROGRESS ───────────────────────────────────────────────────── */
+function updateProgress() {
+  var total = checklist.length;
+  var done  = checklist.filter(function(i) { return i.done; }).length;
+  var pct   = total ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('prog-label').textContent = done + ' of ' + total + ' done';
+  document.getElementById('prog-pct').textContent   = pct + '%';
+  document.getElementById('prog-fill').style.width  = pct + '%';
+
+  var allDone = document.getElementById('all-done');
+  if (total > 0 && done === total) allDone.classList.remove('hidden');
+  else allDone.classList.add('hidden');
+}
+
+/* ─── WORKFLOW GUIDE ─────────────────────────────────────────────── */
+function buildGuide(def) {
+  var container = document.getElementById('guide-steps');
+  container.innerHTML = def.guide.map(function(step) {
+    return '<div class="guide-step">' +
+             '<div class="guide-step-title">' + escHtml(step.title) + '</div>' +
+             '<p>' + escHtml(step.body) + '</p>' +
+           '</div>';
+  }).join('');
+}
+
+function toggleGuide() {
+  guideVisible = !guideVisible;
+  var panel = document.getElementById('guide-panel');
+  var btn   = document.getElementById('guide-toggle-btn');
+  panel.classList.toggle('hidden', !guideVisible);
+  btn.textContent = guideVisible ? '📖 Hide workflow guide' : '📖 Show workflow guide';
+}
+
+/* ─── LOCAL STORAGE ──────────────────────────────────────────────── */
+var STORAGE_PREFIX = 'nhh_checklist_';
+
+function saveProgress(key) {
+  var state = {};
+  checklist.forEach(function(item) { state[item.id] = item.done; });
+  try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadProgress(key) {
+  try {
+    var raw = localStorage.getItem(STORAGE_PREFIX + key);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+/* ─── HELPERS ────────────────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDateShort(d) {
+  if (!d) return '';
+  try {
+    var p = d.split('-');
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]);
+  } catch(e) { return d; }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recap Corner — NegOr HS Hub</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --p:    #7c3aed;
+      --p-lt: #f5f3ff;
+      --p-pal:#ede9fe;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#f5f3ff 0%,#fff 55%,#fdf5ef 100%); min-height:100vh; }
+
+    /* ── Form inputs ── */
+    .inp { width:100%; padding:.625rem 1rem; border:1px solid #d1d5db; border-radius:.625rem; font-size:.875rem; outline:none; background:white; transition:border-color .15s,box-shadow .15s; }
+    .inp:focus { border-color:var(--p); box-shadow:0 0 0 3px rgba(124,58,237,.1); }
+    .label { display:block; font-size:.8rem; font-weight:500; color:#374151; margin-bottom:.25rem; }
+
+    /* ── Buttons ── */
+    .btn-p { display:inline-flex; align-items:center; gap:.35rem; padding:.65rem 1.4rem; background:var(--p); color:#fff; border-radius:.75rem; font-size:.875rem; font-weight:600; border:none; cursor:pointer; transition:background .15s; }
+    .btn-p:hover { background:#6d28d9; }
+    .btn-p:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-outline { display:inline-flex; align-items:center; gap:.3rem; padding:.6rem 1rem; background:#fff; border:1px solid #e5e7eb; color:#4b5563; border-radius:.75rem; font-size:.875rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-outline:hover { background:#f9fafb; }
+    .btn-danger { display:inline-flex; align-items:center; gap:.3rem; padding:.45rem .8rem; background:#fff; border:1px solid #fecaca; color:#dc2626; border-radius:.625rem; font-size:.78rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-danger:hover { background:#fef2f2; }
+
+    /* ── Section builder ── */
+    .section-block { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1.25rem; position:relative; }
+    .section-block + .section-block { margin-top:.75rem; }
+
+    /* ── Photo upload area ── */
+    .photo-dropzone { border:2px dashed #d1d5db; border-radius:.75rem; padding:1rem; text-align:center; cursor:pointer; transition:border-color .15s,background .15s; background:#fafafa; }
+    .photo-dropzone:hover { border-color:var(--p); background:var(--p-lt); }
+    .photo-dropzone.has-image { border-color:#a78bfa; border-style:solid; }
+    .photo-preview { width:100%; max-height:160px; object-fit:cover; border-radius:.5rem; }
+
+    /* ── Recap cards (public view) ── */
+    .recap-card { background:#fff; border:1px solid #e5e7eb; border-radius:1.5rem; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+    .recap-section-row { display:grid; gap:1.25rem; align-items:start; }
+    .recap-section-row.has-photo { grid-template-columns:1fr 1fr; }
+    @media (max-width:640px) { .recap-section-row.has-photo { grid-template-columns:1fr; } }
+    .recap-section-photo { width:100%; border-radius:.875rem; object-fit:cover; max-height:240px; display:block; }
+    .btn-dl { display:inline-flex; align-items:center; gap:.35rem; padding:.4rem .875rem;
+              background:#fff; border:1px solid #d1d5db; border-radius:.625rem;
+              font-size:.75rem; font-weight:600; color:#4b5563; cursor:pointer;
+              transition:all .15s; }
+    .btn-dl:hover { border-color:var(--p); color:var(--p); background:var(--p-lt); }
+    .btn-dl:disabled { opacity:.5; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:1px solid var(--p-pal)">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div class="flex-1">
+      <p class="font-bold leading-none" style="color:var(--p)">Recap Corner</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · Past Activities</p>
+    </div>
+    <button id="coord-btn" onclick="toggleCoordSection()"
+            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
+      Coordinator ▾
+    </button>
+  </div>
+</header>
+
+<!-- ═══ COORDINATOR SECTION ═══ -->
+<div id="coord-section" class="hidden border-b border-gray-100" style="background:#faf9ff">
+  <div class="max-w-4xl mx-auto px-4 py-5">
+
+    <!-- Login -->
+    <div id="recap-login" class="max-w-sm">
+      <p class="text-sm font-semibold text-gray-700 mb-3">🔐 Coordinator Login</p>
+      <div class="flex gap-2">
+        <input id="coord-token" type="password" placeholder="Coordinator token" class="inp flex-1"
+               onkeydown="if(event.key==='Enter') coordLogin()" />
+        <button onclick="coordLogin()" class="btn-p px-4 py-2.5 text-sm">Login</button>
+      </div>
+      <p id="coord-err" class="hidden text-xs text-red-600 mt-1.5">Invalid token.</p>
+    </div>
+
+    <!-- Recap form (after login) -->
+    <div id="recap-form" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-sm font-bold text-gray-800">📝 Post a New Recap</p>
+        <button onclick="coordLogout()" class="text-xs text-red-500 hover:text-red-700">Sign out</button>
+      </div>
+
+      <!-- Meta fields -->
+      <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4 space-y-3">
+        <p class="text-xs font-bold uppercase tracking-widest text-purple-500 mb-3">Event Details</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="label">Event Title <span class="text-red-500">*</span></label>
+            <input id="rc-title" type="text" class="inp" placeholder="e.g., General Assembly — May 2026" />
+          </div>
+          <div>
+            <label class="label">Event Date <span class="text-red-500">*</span></label>
+            <input id="rc-date" type="date" class="inp" />
+          </div>
+          <div>
+            <label class="label">Venue</label>
+            <input id="rc-venue" type="text" class="inp" placeholder="e.g., Kawayan Casitas, Dauin" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="label">Summary / Tagline</label>
+            <input id="rc-summary" type="text" class="inp" placeholder="One sentence describing the event..." />
+          </div>
+          <div>
+            <label class="label">Written By</label>
+            <input id="rc-author" type="text" class="inp" placeholder="Your name" />
+          </div>
+          <div>
+            <label class="label">Attendance Count</label>
+            <input id="rc-attendance" type="number" class="inp" placeholder="e.g., 45" min="0" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections builder -->
+      <div class="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs font-bold uppercase tracking-widest text-purple-500">Sections</p>
+          <button onclick="addSection()" class="btn-outline text-xs py-1.5 px-3 gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Section
+          </button>
+        </div>
+        <div id="sections-builder"></div>
+        <p class="text-xs text-gray-400 mt-3">Each section has a title, bullet highlights, and one photo.</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="rc-save-btn" onclick="saveRecap()" class="btn-p">Post Recap</button>
+        <button onclick="clearRecapForm()" class="btn-outline">Clear All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN CONTENT ═══ -->
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+  <div class="text-center mb-8">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--p-lt)">
+      <span class="text-2xl">📸</span>
+    </div>
+    <h1 class="text-2xl font-extrabold" style="color:var(--p)">Recap Corner</h1>
+    <p class="text-sm text-gray-500 mt-1">Relive our community moments — highlights from past activities.</p>
+  </div>
+
+  <div id="recaps-loading" class="text-center py-16 text-gray-400">
+    <div class="text-4xl mb-2 animate-pulse">📚</div>
+    <p class="text-sm">Loading recaps…</p>
+  </div>
+
+  <div id="recaps-empty" class="hidden text-center py-16 text-gray-400">
+    <div class="text-4xl mb-3">📭</div>
+    <p class="font-medium text-gray-600 mb-1">No recaps yet</p>
+    <p class="text-sm">Check back after our next activity!</p>
+  </div>
+
+  <div id="recaps-list" class="hidden space-y-8"></div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-12 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs text-gray-300 mb-3">💛 Created by Fibee</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr HS Hub Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+let coordToken = '';
+// Each section: { title, highlights, photoUrl, photoBase64, photoMime, photoName, uploading }
+let sections   = [];
+
+// ── PUBLIC: LOAD RECAPS ───────────────────────────────────────
+async function loadRecaps() {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=getRecaps');
+    const data = await res.json();
+    const recaps = (data.success && data.data) ? data.data : [];
+    document.getElementById('recaps-loading').classList.add('hidden');
+    if (recaps.length === 0) { document.getElementById('recaps-empty').classList.remove('hidden'); return; }
+    document.getElementById('recaps-list').classList.remove('hidden');
+    document.getElementById('recaps-list').innerHTML = recaps.map(renderRecapCard).join('');
+  } catch(e) {
+    document.getElementById('recaps-loading').classList.add('hidden');
+    document.getElementById('recaps-empty').classList.remove('hidden');
+    document.getElementById('recaps-empty').innerHTML = `
+      <div class="text-4xl mb-3">📡</div>
+      <p class="font-medium text-gray-600 mb-1">Couldn't load recaps</p>
+      <p class="text-sm">Check your connection and refresh.</p>`;
+  }
+}
+
+var _recapCardIdx = 0;
+function renderRecapCard(r) {
+  const cardId     = 'recap-card-' + (_recapCardIdx++);
+  const title      = r['event_title']     || 'Community Activity';
+  const date       = r['event_date']      ? fmtDate(r['event_date'])  : '';
+  const venue      = r['venue']           || '';
+  const summary    = r['summary']         || '';
+  const writtenBy  = r['written_by']      || '';
+  const attendance = r['attendance_count']|| '';
+  const recapDate  = r['recap_date']      ? fmtDateShort(r['recap_date']) : '';
+  const sects      = Array.isArray(r.sections) ? r.sections : [];
+
+  const sectionsHtml = sects.map(function(s) {
+    const hasPhoto = s.photoUrl && s.photoUrl.trim();
+    const bullets  = (s.highlights || '').split('\n')
+      .filter(function(l) { return l.trim(); })
+      .map(function(l) { return '<li class="text-sm text-gray-700 leading-relaxed">' + escHtml(l.trim().replace(/^[•\-\*]\s*/, '')) + '</li>'; })
+      .join('');
+
+    return `
+    <div class="recap-section-row ${hasPhoto ? 'has-photo' : ''} py-4 border-t border-gray-100 first:border-t-0 first:pt-0">
+      <div>
+        ${s.title ? `<h3 class="font-bold text-gray-900 text-base mb-2">${escHtml(s.title)}</h3>` : ''}
+        ${bullets ? `<ul class="space-y-1 list-none pl-0">${bullets}</ul>` : ''}
+      </div>
+      ${hasPhoto ? `<div><img src="${s.photoUrl}" alt="${escHtml(s.title||'')}" class="recap-section-photo" loading="lazy" onerror="this.parentElement.remove()" /></div>` : ''}
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="recap-card" id="${cardId}">
+    <!-- Card header -->
+    <div class="px-6 pt-6 pb-4" style="background:linear-gradient(135deg,var(--p-lt) 0%,#fff 100%)">
+      <div class="flex flex-wrap items-start justify-between gap-2 mb-1">
+        <h2 class="text-xl font-extrabold" style="color:var(--p)">${escHtml(title)}</h2>
+        <button id="dl-${cardId}" onclick="downloadRecap('${cardId}','${escAttr(title)}')" class="btn-dl">
+          📥 Download
+        </button>
+      </div>
+      <p class="text-xs text-gray-500">
+        ${date ? '📅 ' + escHtml(date) : ''}
+        ${venue ? ' · 📍 ' + escHtml(venue) : ''}
+        ${attendance ? ' · 👨‍👩‍👧 ' + escHtml(attendance) + ' attended' : ''}
+      </p>
+      ${summary ? `<p class="mt-2 text-sm text-gray-700 italic leading-snug">"${escHtml(summary)}"</p>` : ''}
+    </div>
+    <!-- Sections -->
+    ${sects.length > 0 ? `<div class="px-6 pb-5 space-y-0">${sectionsHtml}</div>` : ''}
+    <!-- Footer -->
+    ${writtenBy || recapDate ? `
+    <div class="px-6 py-3 border-t border-gray-100 flex items-center gap-2">
+      <p class="text-xs text-gray-400">
+        ${writtenBy ? '✍️ ' + escHtml(writtenBy) : ''}
+        ${recapDate ? ' · Posted ' + escHtml(recapDate) : ''}
+      </p>
+    </div>` : ''}
+  </div>`;
+}
+
+// ── COORDINATOR ───────────────────────────────────────────────
+function toggleCoordSection() {
+  document.getElementById('coord-section').classList.toggle('hidden');
+}
+
+async function coordLogin() {
+  const t   = document.getElementById('coord-token').value.trim();
+  const err = document.getElementById('coord-err');
+  if (!t) return;
+  err.classList.add('hidden');
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=getEvents&token=' + encodeURIComponent(t));
+    const data = await res.json();
+    if (data.error === 'Unauthorized') { err.classList.remove('hidden'); return; }
+    coordToken = t;
+    localStorage.setItem('nhh_coord_token', t);
+    document.getElementById('recap-login').classList.add('hidden');
+    document.getElementById('recap-form').classList.remove('hidden');
+    document.getElementById('coord-btn').textContent = 'Coordinator ✓';
+    if (sections.length === 0) addSection(); // start with one section
+  } catch(e) { err.textContent = 'Connection error.'; err.classList.remove('hidden'); }
+}
+
+function coordLogout() {
+  coordToken = '';
+  localStorage.removeItem('nhh_coord_token');
+  document.getElementById('recap-login').classList.remove('hidden');
+  document.getElementById('recap-form').classList.add('hidden');
+  document.getElementById('coord-token').value = '';
+  document.getElementById('coord-btn').textContent = 'Coordinator ▾';
+}
+
+// ── SECTION BUILDER ───────────────────────────────────────────
+function addSection() {
+  sections.push({ title:'', highlights:'', photoUrl:'', photoBase64:'', photoMime:'', photoName:'', uploading:false });
+  renderSections();
+}
+
+function removeSection(idx) {
+  sections.splice(idx, 1);
+  renderSections();
+}
+
+function renderSections() {
+  const container = document.getElementById('sections-builder');
+  if (sections.length === 0) {
+    container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No sections yet. Click "Add Section" to begin.</p>';
+    return;
+  }
+  container.innerHTML = sections.map(function(s, i) {
+    const hasPhoto = s.photoUrl && s.photoUrl.trim();
+    return `
+    <div class="section-block">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-xs font-bold text-purple-600">Section ${i + 1}</p>
+        <button onclick="removeSection(${i})" class="btn-danger">✕ Remove</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="sm:col-span-2">
+          <label class="label">Section Title</label>
+          <input type="text" class="inp" placeholder="e.g., Kids' Interview + Photoshoot"
+                 value="${escAttr(s.title)}"
+                 oninput="sections[${i}].title=this.value" />
+        </div>
+        <div>
+          <label class="label">Bullet Highlights <span class="text-gray-400 font-normal">(one per line)</span></label>
+          <textarea rows="5" class="inp resize-none text-sm" placeholder="Children came in attire reflecting their future careers&#10;They joined an interview shoot with the Dads&#10;Quick solo and group photo sessions were done"
+                    oninput="sections[${i}].highlights=this.value">${escHtml(s.highlights)}</textarea>
+        </div>
+        <div>
+          <label class="label">Photo <span class="text-gray-400 font-normal">(1 per section)</span></label>
+          <div class="photo-dropzone ${hasPhoto ? 'has-image' : ''}" onclick="document.getElementById('photo-input-${i}').click()">
+            ${hasPhoto
+              ? `<img src="${s.photoUrl}" class="photo-preview" /><p class="text-xs text-purple-600 mt-1.5 font-medium">✓ Uploaded · click to replace</p>`
+              : s.uploading
+                ? `<div class="text-sm text-purple-500 animate-pulse py-3">⏳ Uploading…</div>`
+                : `<div class="py-3"><p class="text-sm text-gray-400">📷 Click to upload photo</p><p class="text-xs text-gray-300 mt-1">JPG, PNG · max 5 MB</p></div>`
+            }
+          </div>
+          <input type="file" id="photo-input-${i}" class="hidden" accept="image/*"
+                 onchange="handlePhotoSelect(${i}, this)" />
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function handlePhotoSelect(idx, input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5 MB.'); return; }
+
+  sections[idx].uploading = true;
+  renderSections();
+
+  try {
+    const base64   = await fileToBase64(file);
+    const stripped = base64.split(',')[1];
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        _type: 'uploadPhoto', _token: coordToken,
+        category: 'recap',
+        base64:    stripped,
+        mimeType:  file.type,
+        fileName:  file.name,
+      }),
+    });
+    const data = await res.json();
+    if (data.success && data.url) {
+      sections[idx].photoUrl    = data.url;
+      sections[idx].photoBase64 = stripped;
+      sections[idx].photoMime   = file.type;
+      sections[idx].photoName   = file.name;
+    } else {
+      alert('Photo upload failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch(e) { alert('Upload error: ' + e.message); }
+  finally { sections[idx].uploading = false; renderSections(); }
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload  = function(e) { resolve(e.target.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── SAVE RECAP ────────────────────────────────────────────────
+async function saveRecap() {
+  const title = document.getElementById('rc-title').value.trim();
+  const date  = document.getElementById('rc-date').value.trim();
+  if (!title) return alert('⚠️ Event title is required.');
+  if (!date)  return alert('⚠️ Event date is required.');
+  if (sections.length === 0) return alert('⚠️ Add at least one section.');
+
+  const sectionsToSave = sections.map(function(s) {
+    return { title: s.title, highlights: s.highlights, photoUrl: s.photoUrl };
+  });
+
+  const btn = document.getElementById('rc-save-btn');
+  btn.disabled = true; btn.textContent = 'Posting…';
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        _type:          'createRecap',
+        _token:         coordToken,
+        eventTitle:     title,
+        eventDate:      date,
+        summary:        document.getElementById('rc-summary').value.trim(),
+        writtenBy:      document.getElementById('rc-author').value.trim(),
+        attendanceCount:document.getElementById('rc-attendance').value.trim(),
+        sections:       sectionsToSave,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      clearRecapForm();
+      await loadRecaps();
+      alert('✅ Recap posted!');
+    } else {
+      alert('Error: ' + (data.error || 'Could not post recap.'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Post Recap'; }
+}
+
+function clearRecapForm() {
+  ['rc-title','rc-date','rc-venue','rc-summary','rc-author','rc-attendance'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  sections = [];
+  addSection();
+}
+
+// ── DOWNLOAD AS IMAGE ─────────────────────────────────────────
+async function downloadRecap(cardId, title) {
+  var card = document.getElementById(cardId);
+  var btn  = document.getElementById('dl-' + cardId);
+  if (!card || !btn) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  try {
+    var canvas = await html2canvas(card, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+    var link = document.createElement('a');
+    link.download = (title || 'recap').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '_recap.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('Could not generate image. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 Download';
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '';
+  try {
+    var parts = d.split('-');
+    var months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+    return months[parseInt(parts[1])-1] + ' ' + parseInt(parts[2]) + ', ' + parts[0];
+  } catch(e) { return d; }
+}
+function fmtDateShort(d) {
+  if (!d) return '';
+  try {
+    var dt = new Date(d);
+    return dt.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+  } catch(e) { return d; }
+}
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str) { return escHtml(str); }
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  loadRecaps();
+  const saved = localStorage.getItem('nhh_coord_token');
+  if (saved) {
+    document.getElementById('coord-token').value = saved;
+    coordLogin();
+  }
+});
+</script>
+
+</body>
+</html>

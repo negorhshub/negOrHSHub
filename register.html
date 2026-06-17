@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Registration — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ── Terracotta palette ── */
+    :root {
+      --t:     #B5451B;   /* primary */
+      --t-dk:  #8B3214;   /* dark / hover */
+      --t-md:  #D4714E;   /* medium / borders */
+      --t-lt:  #FEF3EE;   /* light bg */
+      --t-pal: #F9DDD0;   /* pale / progress track */
+      --t-rng: rgba(181,69,27,.14); /* focus ring */
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(150deg,#FEF3EE 0%,#fff 55%,#fdf5ef 100%);
+      min-height: 100vh;
+    }
+
+    /* Steps */
+    .step { display: none; animation: fs .3s ease; }
+    .step.active { display: block; }
+    @keyframes fs { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Progress */
+    .prog-track::before {
+      content:''; position:absolute;
+      top:14px; left:16px; right:16px; height:2px;
+      background:var(--t-pal); z-index:0;
+    }
+    #prog-fill {
+      position:absolute; top:14px; left:16px; height:2px;
+      background:var(--t); z-index:1; transition:width .4s ease;
+    }
+    .pdot {
+      position:relative; z-index:2;
+      width:30px; height:30px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:700; transition:all .3s;
+      background:var(--t-pal); color:var(--t);
+    }
+    .pdot.done { background:var(--t); color:#fff; }
+    .pdot.curr { background:#fff; color:var(--t); border:2px solid var(--t); box-shadow:0 0 0 4px var(--t-pal); }
+
+    /* Form elements */
+    .label  { display:block; font-size:.8rem; font-weight:500; color:#374151; margin-bottom:.25rem; }
+    .inp    {
+      width:100%; padding:.625rem 1rem;
+      border:1px solid #d1d5db; border-radius:.625rem;
+      font-size:.875rem; outline:none; background:white;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    .inp:focus  { border-color:var(--t); box-shadow:0 0 0 3px var(--t-rng); }
+    .field-err  { border-color:#ef4444 !important; background:#fef2f2 !important; }
+
+    /* Check cards */
+    .ccard {
+      display:flex; align-items:flex-start; gap:.6rem;
+      padding:.6rem .75rem;
+      border:1px solid #e5e7eb; border-radius:.625rem;
+      cursor:pointer; font-size:.8125rem; color:#374151;
+      transition:border-color .15s, background .15s;
+    }
+    .ccard:hover { border-color:var(--t-md); background:var(--t-lt); }
+    .ccard:has(input:checked) { border-color:var(--t); background:var(--t-lt); }
+    .ccard input { margin-top:1px; accent-color:var(--t); flex-shrink:0; }
+
+    /* Accordion */
+    .acc-panel { display:none; }
+    .acc-panel.open { display:grid; }
+
+    /* Buttons */
+    .btn-p {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.7rem 1.6rem; background:var(--t); color:#fff;
+      border-radius:.75rem; font-size:.875rem; font-weight:600;
+      border:none; cursor:pointer; transition:background .15s, transform .1s;
+    }
+    .btn-p:hover   { background:var(--t-dk); }
+    .btn-p:active  { transform:scale(.97); }
+    .btn-p:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-bk {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.7rem 1.2rem; background:#fff; border:1px solid #e5e7eb;
+      color:#4b5563; border-radius:.75rem; font-size:.875rem; font-weight:500;
+      cursor:pointer; transition:background .15s;
+    }
+    .btn-bk:hover { background:#f9fafb; }
+
+    /* Add-entry dashed button */
+    .btn-add {
+      width:100%; display:flex; align-items:center; justify-content:center; gap:.5rem;
+      padding:.625rem 1rem; margin-top:1rem;
+      border:2px dashed var(--t-md); border-radius:.75rem;
+      color:var(--t); font-size:.875rem; font-weight:500;
+      cursor:pointer; background:transparent; transition:border-color .15s, background .15s;
+    }
+    .btn-add:hover { border-color:var(--t); background:var(--t-lt); }
+
+    /* Upload zone */
+    .upload-zone {
+      border:2px dashed var(--t-md); border-radius:.75rem;
+      padding:1.5rem; text-align:center; cursor:pointer;
+      background:var(--t-lt); transition:border-color .15s, background .15s;
+    }
+    .upload-zone:hover { border-color:var(--t); }
+    .upload-zone.ok    { border-color:#16a34a; background:#f0fdf4; }
+
+    /* Section divider label */
+    .sec-lbl {
+      font-size:.7rem; font-weight:700; color:#9ca3af;
+      text-transform:uppercase; letter-spacing:.08em; margin-bottom:.65rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:1px solid var(--t-pal)">
+  <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div>
+      <p class="font-bold leading-none" style="color:var(--t-dk)">NegOr HS Hub</p>
+      <p class="text-xs text-gray-400">Family Membership Registration</p>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ PROGRESS ═══ -->
+<div class="max-w-2xl mx-auto px-4 pt-6 pb-2" id="progress-area">
+  <div class="relative prog-track flex justify-between">
+    <div id="prog-fill" style="width:0%"></div>
+    <div id="pd1" class="pdot curr">1</div>
+    <div id="pd2" class="pdot">2</div>
+    <div id="pd3" class="pdot">3</div>
+    <div id="pd4" class="pdot">4</div>
+    <div id="pd5" class="pdot">5</div>
+    <div id="pd6" class="pdot">6</div>
+  </div>
+  <div class="flex justify-between mt-1 px-0.5">
+    <span class="text-xs text-gray-400">Family</span>
+    <span class="text-xs text-gray-400">Parents</span>
+    <span class="text-xs text-gray-400">Children</span>
+    <span class="text-xs text-gray-400">Interests</span>
+    <span class="text-xs text-gray-400">Skills</span>
+    <span class="text-xs text-gray-400">Submit</span>
+  </div>
+</div>
+
+<!-- ═══ FORM ═══ -->
+<div class="max-w-2xl mx-auto px-4 pb-16">
+
+  <div id="err-banner" class="hidden mt-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span id="err-txt"></span>
+  </div>
+
+  <form id="reg-form" novalidate>
+
+  <!-- ══ STEP 1: FAMILY ══ -->
+  <div id="step-1" class="step active mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold" style="color:var(--t-dk)">Welcome to NegOr HS Hub!</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Let's start with your family's basic details. Fields marked <span class="text-red-500">*</span> are required.</p>
+
+    <div class="space-y-4">
+      <div>
+        <label class="label" for="familyName">Family Name (Surname) <span class="text-red-500">*</span></label>
+        <input type="text" id="familyName" class="inp" placeholder="e.g., Santos, dela Cruz, Reyes" required />
+      </div>
+
+      <div class="pt-3 border-t border-gray-100">
+        <p class="sec-lbl">Home Address</p>
+        <div class="space-y-3">
+          <div>
+            <label class="label" for="street">House No., Street, Subdivision <span class="text-red-500">*</span></label>
+            <input type="text" id="street" class="inp" placeholder="e.g., 23 Rizal St., Villa Verde Subd." required />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="barangay">Barangay <span class="text-red-500">*</span></label>
+              <input type="text" id="barangay" class="inp" placeholder="e.g., Bgry. 1 Poblacion" required />
+            </div>
+            <div>
+              <label class="label" for="city">City / Municipality <span class="text-red-500">*</span></label>
+              <input type="text" id="city" class="inp" placeholder="e.g., Dumaguete City" required />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="province">Province <span class="text-red-500">*</span></label>
+              <input type="text" id="province" class="inp" value="Negros Oriental" required />
+            </div>
+            <div>
+              <label class="label" for="zipCode">ZIP Code</label>
+              <input type="text" id="zipCode" class="inp" placeholder="e.g., 6200" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-gray-100">
+        <p class="sec-lbl">Emergency Contact</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="label" for="emergName">Contact Name <span class="text-red-500">*</span></label>
+            <input type="text" id="emergName" class="inp" placeholder="Full name" required />
+          </div>
+          <div>
+            <label class="label" for="emergPhone">Contact Phone <span class="text-red-500">*</span></label>
+            <input type="tel" id="emergPhone" class="inp" placeholder="09XX-XXX-XXXX" required />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-end">
+      <button type="button" class="btn-p" onclick="goNext(1)">Next: Parents & Guardians →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2: PARENTS ══ -->
+  <div id="step-2" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold" style="color:var(--t-dk)">Parents & Guardians</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Add all parents or guardians in your family. At least one is required.</p>
+    <div id="parents-wrap" class="space-y-5"></div>
+    <button type="button" class="btn-add" onclick="addParent()">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Another Parent / Guardian
+    </button>
+    <div class="mt-8 flex justify-between">
+      <button type="button" class="btn-bk" onclick="goPrev(2)">← Back</button>
+      <button type="button" class="btn-p" onclick="goNext(2)">Next: Your Children →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3: CHILDREN ══ -->
+  <div id="step-3" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold" style="color:var(--t-dk)">Your Children</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Add each child in your homeschool. You may proceed without adding children.</p>
+    <div id="children-wrap" class="space-y-5"></div>
+    <button type="button" class="btn-add" onclick="addChild()">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Another Child
+    </button>
+    <div class="mt-8 flex justify-between">
+      <button type="button" class="btn-bk" onclick="goPrev(3)">← Back</button>
+      <button type="button" class="btn-p" onclick="goNext(3)">Next: Community Interests →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 4: INTERESTS ══ -->
+  <div id="step-4" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold" style="color:var(--t-dk)">Community Interests</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Let us know what your family is looking forward to. No commitments yet!</p>
+
+    <!-- Activities -->
+    <div class="mb-7">
+      <p class="text-sm font-semibold text-gray-700 mb-1">📅 Annual Community Huddles &amp; Events</p>
+      <p class="text-xs text-gray-400 mb-3">Which of our regular activities would your family like to join?</p>
+      <div id="activities-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+    </div>
+
+    <!-- Clubs -->
+    <div class="mb-7">
+      <p class="text-sm font-semibold text-gray-700 mb-1">🌱 Growth Opportunities</p>
+      <p class="text-xs text-gray-400 mb-3">Which groups or clubs is your family interested in?</p>
+      <div id="clubs-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="pt-5 border-t border-gray-100">
+      <p class="text-sm font-semibold text-gray-700 mb-1">💡 Your Suggestions</p>
+      <p class="text-xs text-gray-400 mb-4">Have ideas for new activities, huddles, or growth groups? We'd love to hear them!</p>
+      <div class="space-y-4">
+        <div>
+          <label class="label" for="act-suggest">Activity / Huddle Ideas <span class="text-gray-400 font-normal">(optional)</span></label>
+          <textarea id="act-suggest" rows="2" class="inp resize-none"
+            placeholder="e.g., Monthly cooking class, Nature hikes, Dad & Kids bonding day…"></textarea>
+        </div>
+        <div>
+          <label class="label" for="growth-suggest">Growth Opportunity Ideas <span class="text-gray-400 font-normal">(optional)</span></label>
+          <textarea id="growth-suggest" rows="2" class="inp resize-none"
+            placeholder="e.g., Sign language club, Debate team, Math co-op…"></textarea>
+        </div>
+        <label class="ccard items-start">
+          <input type="checkbox" id="willing-lead" />
+          <span class="text-sm text-gray-700 leading-snug">
+            <strong>I am willing to lead or co-facilitate</strong> one or more of the activities or groups I suggested above.
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-between">
+      <button type="button" class="btn-bk" onclick="goPrev(4)">← Back</button>
+      <button type="button" class="btn-p" onclick="goNext(4)">Next: How You Can Help →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 5: SKILLS & VOLUNTEER ══ -->
+  <div id="step-5" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold" style="color:var(--t-dk)">How You Can Help</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-6">Every family has gifts to share. This helps us match you with the right opportunities!</p>
+
+    <!-- Volunteer (streamlined) -->
+    <div class="mb-7">
+      <p class="text-sm font-semibold text-gray-700 mb-1">🙌 Volunteer Participation</p>
+      <p class="text-xs text-gray-400 mb-3">How would your family like to contribute? (Select all that apply)</p>
+      <div id="volunteer-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3"></div>
+      <div>
+        <label class="label" for="vol-other">Other ways you'd like to help <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input type="text" id="vol-other" class="inp" placeholder="Describe your contribution…" />
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div>
+      <p class="text-sm font-semibold text-gray-700 mb-1">✨ Gifts &amp; Strengths Inventory</p>
+      <p class="text-xs text-gray-400 mb-3">What skills can your family contribute? Click a category to expand.</p>
+      <div id="skills-accordion" class="space-y-2"></div>
+      <div class="mt-3">
+        <label class="label" for="other-skills">Other Skills or Strengths <span class="text-gray-400 font-normal">(optional)</span></label>
+        <textarea id="other-skills" rows="2" class="inp resize-none" placeholder="Describe any additional skills…"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-between">
+      <button type="button" class="btn-bk" onclick="goPrev(5)">← Back</button>
+      <button type="button" class="btn-p" onclick="goNext(5)">Next: Consent &amp; Payment →</button>
+    </div>
+  </div>
+
+  <!-- ══ STEP 6: CONSENT & PAYMENT ══ -->
+  <div id="step-6" class="step mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-xl font-bold" style="color:var(--t-dk)">Review, Consent &amp; Payment</h2>
+    <p class="text-sm text-gray-500 mt-1 mb-5">Almost there! Review your details, read the agreements, and complete your registration payment.</p>
+
+    <!-- Review -->
+    <div id="review-box" class="rounded-xl p-5 mb-6 text-sm space-y-3"
+         style="background:var(--t-lt); border:1px solid var(--t-pal)"></div>
+
+    <!-- Consent -->
+    <div class="space-y-4 mb-7">
+      <p class="text-sm font-semibold text-gray-700">Consent &amp; Agreements</p>
+
+      <label class="ccard items-start">
+        <input type="checkbox" id="consent-data" required />
+        <span class="text-sm text-gray-700 leading-snug">
+          <strong>Personal Data Collection Consent</strong> — I give NegOr HS Hub permission to collect and store my
+          family's personal information for community management purposes. This data is kept confidential and used only
+          for community activities. <span class="text-red-500">*</span>
+        </span>
+      </label>
+
+      <label class="ccard items-start">
+        <input type="checkbox" id="consent-photo" />
+        <span class="text-sm text-gray-700 leading-snug">
+          <strong>Photo &amp; Media Consent</strong> — I give permission for photos and videos taken during community
+          events to include my family, and for these to be shared within the NegOr HS Hub community (private group,
+          newsletter, memory books, etc.).
+        </span>
+      </label>
+
+      <label class="ccard items-start">
+        <input type="checkbox" id="consent-files" />
+        <span class="text-sm text-gray-700 leading-snug">
+          <strong>File &amp; Photo Contribution Consent</strong> — I give permission for files, photos, and resources
+          I share with the community to be stored in the NegOr HS Hub shared Google Drive folder for community use.
+        </span>
+      </label>
+    </div>
+
+    <!-- Payment -->
+    <div class="rounded-2xl p-5 mb-6" style="border:2px solid var(--t-md); background:var(--t-lt)">
+      <p class="text-sm font-bold mb-1" style="color:var(--t-dk)">💳 Membership Registration Fee</p>
+      <p class="text-sm text-gray-600 mb-5">
+        A one-time fee of <strong>₱200.00</strong> is required to complete your registration.
+        This covers our community's Google Drive subscription for secure data storage.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center gap-5">
+        <!-- QR Code -->
+        <div class="text-center flex-shrink-0">
+          <div class="bg-white rounded-xl border border-gray-200 p-2 inline-block">
+            <img src="payment-qr.png" alt="InstaPay / GCash QR Code"
+                 class="w-44 h-44 object-contain"
+                 onerror="this.outerHTML='<div class=\'w-44 h-44 flex items-center justify-center bg-gray-100 rounded-lg text-xs text-gray-400 text-center p-3\'>QR image not found.<br/>Save QR as<br/><strong>payment-qr.png</strong><br/>in this folder.</div>'" />
+          </div>
+          <p class="text-xs text-gray-500 mt-2">GCash / InstaPay</p>
+          <p class="text-xs font-semibold mt-0.5" style="color:var(--t)">Debbie Uy Matiao</p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="flex-1 space-y-2">
+          <div class="flex items-start gap-2 text-sm text-gray-700">
+            <span>1️⃣</span>
+            <span>Open your <strong>GCash</strong> or any <strong>InstaPay</strong>-enabled banking app</span>
+          </div>
+          <div class="flex items-start gap-2 text-sm text-gray-700">
+            <span>2️⃣</span>
+            <span>Scan the QR code and send exactly <strong>₱200.00</strong></span>
+          </div>
+          <div class="flex items-start gap-2 text-sm text-gray-700">
+            <span>3️⃣</span>
+            <span>Take a <strong>screenshot</strong> of your successful transfer confirmation</span>
+          </div>
+          <div class="flex items-start gap-2 text-sm text-gray-700">
+            <span>4️⃣</span>
+            <span>Upload the screenshot below</span>
+          </div>
+          <p class="text-xs text-gray-400 pt-1">Transfer fees may apply. Please ensure ₱200 is received.</p>
+        </div>
+      </div>
+
+      <!-- File upload -->
+      <div class="mt-5">
+        <label class="label">Upload Proof of Payment <span class="text-red-500">*</span></label>
+        <div id="upload-zone" class="upload-zone" onclick="document.getElementById('payment-file').click()">
+          <svg id="upload-icon" class="w-8 h-8 mx-auto mb-2" style="color:var(--t-md)"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <p id="upload-lbl" class="text-sm font-medium" style="color:var(--t)">Click to upload your payment screenshot</p>
+          <p class="text-xs text-gray-400 mt-1">JPG, PNG, or PDF · Max 5 MB</p>
+        </div>
+        <input type="file" id="payment-file" accept="image/*,application/pdf" class="hidden" onchange="onFileSelect(this)" />
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-between items-center">
+      <button type="button" class="btn-bk" onclick="goPrev(6)">← Back</button>
+      <button type="button" id="submit-btn" class="btn-p" onclick="submitForm()">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Submit Registration
+      </button>
+    </div>
+  </div>
+
+  </form>
+
+  <!-- ═══ SUCCESS ═══ -->
+  <div id="success-screen" class="hidden mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <h2 class="text-2xl font-bold mb-2" style="color:var(--t-dk)">Welcome to NegOr HS Hub!</h2>
+    <p class="text-gray-600 text-sm mb-1">Your family's registration has been submitted successfully.</p>
+    <p id="success-id" class="text-xs text-gray-400 mb-5"></p>
+    <div class="rounded-xl p-4 text-sm" style="background:var(--t-lt)">
+      <p style="color:var(--t-dk)">A confirmation email has been sent to your primary parent's email address.</p>
+      <p class="text-gray-500 text-xs mt-1">We look forward to learning and growing together with your family!</p>
+    </div>
+  </div>
+
+</div><!-- /wrapper -->
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+
+// ── LISTS ─────────────────────────────────────────────────────
+const ACTIVITIES = [
+  'January — The Great Homeschool Campout',
+  'March 3 — National Homeschool Day Celebration',
+  'June — Learners\' Day',
+  'August 12 — Community Anniversary Celebration',
+  'November — Christmas Party',
+  'December — Christmas Busking + Outreach',
+];
+
+const CLUBS = [
+  'Home\'s Cool Harmony (Music Group)',
+  'Book Exchange Club',
+];
+
+const VOLUNTEER_ROLES = [
+  'Huddle Volunteer (setup, facilitation & program flow)',
+  'Administrative Tasks (records, coordination, documentation)',
+  'Social Media Management & Content Creation',
+  'Photography & Community Documentation',
+  'Resource & Materials Coordinator',
+];
+
+const SKILLS_CATS = [
+  { key:'creative', emoji:'🎨', label:'Creative Arts & Media',
+    items:['Music (instruments, singing, choir)','Visual Arts, Crafts & DIY',
+           'Photography & Videography','Drama, Dance & Performance',
+           'Writing, Storytelling & Design'] },
+  { key:'practical', emoji:'🌿', label:'Practical & Technical Skills',
+    items:['Cooking, Baking & Nutrition','Sewing, Home Arts & Crafts',
+           'Gardening & Outdoor Skills','Technology, Coding & Digital Tools',
+           'Carpentry, Home Repair & DIY'] },
+  { key:'people', emoji:'🤝', label:'People & Community Skills',
+    items:['Teaching, Tutoring & Mentoring','Event Planning & Facilitation',
+           'Leadership & Community Organizing','Counseling & Pastoral Care',
+           'Administrative & Coordination'] },
+  { key:'business', emoji:'📊', label:'Business & Professional',
+    items:['Finance, Budgeting & Bookkeeping','Marketing & Social Media',
+           'Entrepreneurship & Business Planning','Project Management',
+           'Health, Fitness & Wellness Coaching'] },
+];
+
+const RELATIONSHIPS    = ['Mother','Father','Guardian','Grandmother','Grandfather','Aunt','Uncle','Other'];
+const CONTACT_METHODS  = ['Phone Call','Text Message','Email','Facebook Messenger','WhatsApp','Viber'];
+const BLOOD_TYPES      = ['A+','A−','B+','B−','AB+','AB−','O+','O−','Unknown / Not Sure'];
+const GRADES = [
+  'Preschool / Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6',
+  'Grade 7 (JHS)','Grade 8','Grade 9','Grade 10','Grade 11 (SHS)','Grade 12',
+  'College / Post-Secondary','Not yet school-age',
+];
+const CURRICULA = [
+  'Traditional / Structured','Charlotte Mason','Classical Education','Montessori',
+  'Unschooling / Self-Directed','Eclectic / Mixed','Online School / Blended Learning',
+  'DepEd Homeschool Program','Other',
+];
+
+// ── STATE ─────────────────────────────────────────────────────
+let step = 1, pCount = 0, cCount = 0;
+const TOTAL = 6;
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  addParent(); addChild();
+  renderGrid('activities-grid', ACTIVITIES, 'activity');
+  renderGrid('clubs-grid',      CLUBS,      'club');
+  renderGrid('volunteer-grid',  VOLUNTEER_ROLES, 'vol');
+  renderSkills();
+  updateProg();
+});
+
+// ── RENDER HELPERS ────────────────────────────────────────────
+function renderGrid(id, items, name) {
+  document.getElementById(id).innerHTML = items.map(item => `
+    <label class="ccard"><input type="checkbox" name="${name}" value="${item}" /><span>${item}</span></label>
+  `).join('');
+}
+
+function renderSkills() {
+  document.getElementById('skills-accordion').innerHTML = SKILLS_CATS.map(cat => `
+    <div class="border border-gray-200 rounded-xl overflow-hidden">
+      <button type="button" onclick="toggleAcc(this)"
+              class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition text-left">
+        <span class="text-sm font-medium text-gray-800">${cat.emoji} ${cat.label}</span>
+        <svg class="w-4 h-4 text-gray-400 transition-transform acc-ico" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      <div class="acc-panel grid-cols-1 sm:grid-cols-2 gap-2 p-4">
+        ${cat.items.map(s => `
+          <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" name="sk_${cat.key}" value="${s}" class="w-4 h-4 rounded" style="accent-color:var(--t)"/>
+            <span>${s}</span>
+          </label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleAcc(btn) {
+  const p = btn.nextElementSibling, ico = btn.querySelector('.acc-ico');
+  const o = p.classList.contains('open');
+  p.classList.toggle('open', !o);
+  ico.style.transform = o ? '' : 'rotate(180deg)';
+}
+
+// ── DYNAMIC PARENT / CHILD ────────────────────────────────────
+const bldOpts = BLOOD_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+
+function addParent() {
+  pCount++;
+  const n = pCount;
+  const d = document.createElement('div');
+  d.id = `par-${n}`; d.className = 'border border-gray-200 rounded-xl p-5';
+  d.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm font-semibold text-gray-800">Parent / Guardian ${n}</p>
+      ${n>1?`<button type="button" onclick="removeEl('par-${n}')" class="text-xs text-red-500 hover:text-red-700">✕ Remove</button>`:''}
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="label">Full Name <span class="text-red-500">*</span></label>
+        <input name="p_name" type="text" class="inp" placeholder="First M. Last" required/>
+      </div>
+      <div>
+        <label class="label">Nickname <span class="text-gray-400 font-normal">(for birthday display)</span></label>
+        <input name="p_nick" type="text" class="inp" placeholder="e.g. Mama Joy, Papa Dan"/>
+      </div>
+      <div>
+        <label class="label">Email Address${n===1?` <span class="text-red-500">*</span>`:''}</label>
+        <input name="p_email" type="email" class="inp" placeholder="name@email.com" ${n===1?'required':''}/>
+      </div>
+      <div>
+        <label class="label">Phone Number <span class="text-red-500">*</span></label>
+        <input name="p_phone" type="tel" class="inp" placeholder="09XXXXXXXXX" required/>
+      </div>
+      <div>
+        <label class="label">Relationship to Child <span class="text-red-500">*</span></label>
+        <select name="p_rel" class="inp bg-white" required>
+          <option value="">Select…</option>
+          ${RELATIONSHIPS.map(r=>`<option>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="label">Birthday <span class="text-gray-400 font-normal">(month &amp; day only)</span></label>
+        <input name="p_bday" type="text" class="inp" placeholder="MM-DD (e.g. 03-25)"
+               pattern="^(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
+               title="Format: MM-DD (e.g. 03-25)"/>
+      </div>
+      <div>
+        <label class="label">Preferred Contact</label>
+        <select name="p_contact" class="inp bg-white">
+          <option value="">Select…</option>
+          ${CONTACT_METHODS.map(m=>`<option>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="label">Blood Type</label>
+        <select name="p_blood" class="inp bg-white">
+          <option value="">Select…</option>${bldOpts}
+        </select>
+      </div>
+      <div>
+        <label class="label">Occupation / Profession</label>
+        <input name="p_occ" type="text" class="inp" placeholder="e.g., Teacher, Engineer, Homemaker"/>
+      </div>
+    </div>`;
+  document.getElementById('parents-wrap').appendChild(d);
+}
+
+function addChild() {
+  cCount++;
+  const n = cCount;
+  const d = document.createElement('div');
+  d.id = `chd-${n}`; d.className = 'border border-gray-200 rounded-xl p-5';
+  d.innerHTML = `
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-sm font-semibold text-gray-800">Child ${n}</p>
+      ${n>1?`<button type="button" onclick="removeEl('chd-${n}')" class="text-xs text-red-500 hover:text-red-700">✕ Remove</button>`:''}
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="label">Child's Full Name <span class="text-red-500">*</span></label>
+        <input name="c_name" type="text" class="inp" placeholder="First M. Last" required/>
+      </div>
+      <div>
+        <label class="label">Nickname <span class="text-gray-400 font-normal">(for birthday display)</span></label>
+        <input name="c_nick" type="text" class="inp" placeholder="e.g. Lila, Kuya Ben"/>
+      </div>
+      <div>
+        <label class="label">Date of Birth <span class="text-red-500">*</span></label>
+        <input name="c_bday" type="date" class="inp" max="${new Date().toISOString().split('T')[0]}" required/>
+      </div>
+      <div>
+        <label class="label">Grade Level <span class="text-red-500">*</span></label>
+        <select name="c_grade" class="inp bg-white" required>
+          <option value="">Select…</option>
+          ${GRADES.map(g=>`<option>${g}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="label">Blood Type</label>
+        <select name="c_blood" class="inp bg-white">
+          <option value="">Select…</option>${bldOpts}
+        </select>
+      </div>
+      <div>
+        <label class="label">Curriculum / Learning Approach</label>
+        <select name="c_curr" class="inp bg-white">
+          <option value="">Select…</option>
+          ${CURRICULA.map(c=>`<option>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="label">Medical / Allergy Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+        <textarea name="c_med" rows="2" class="inp resize-none"
+          placeholder="Any allergies, medical conditions, or special needs our facilitators should know about…"></textarea>
+      </div>
+    </div>`;
+  document.getElementById('children-wrap').appendChild(d);
+}
+
+function removeEl(id) { document.getElementById(id)?.remove(); }
+
+// ── NAVIGATION ────────────────────────────────────────────────
+function goNext(cur) {
+  if (!validate(cur)) return;
+  step = cur + 1;
+  show(step);
+  if (step === 6) buildReview();
+  top0();
+}
+function goPrev(cur) { step = cur - 1; show(step); top0(); }
+
+function show(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-'+n).classList.add('active');
+  updateProg();
+}
+function top0() { window.scrollTo({ top:0, behavior:'smooth' }); }
+
+function updateProg() {
+  for (let i=1; i<=TOTAL; i++) {
+    const d = document.getElementById('pd'+i);
+    d.classList.remove('done','curr');
+    if (i < step)      { d.classList.add('done'); d.innerHTML='✓'; }
+    else if (i===step) { d.classList.add('curr'); d.innerHTML=i; }
+    else               { d.innerHTML=i; }
+  }
+  document.getElementById('prog-fill').style.width = ((step-1)/(TOTAL-1)*100)+'%';
+}
+
+// ── VALIDATION ────────────────────────────────────────────────
+function validate(n) {
+  clearErr();
+  const box = document.getElementById('step-'+n);
+  const reqs = box.querySelectorAll('[required]');
+  let ok = true;
+  reqs.forEach(el => {
+    el.classList.remove('field-err');
+    if (!el.value.trim()) {
+      el.classList.add('field-err');
+      el.addEventListener('input', () => el.classList.remove('field-err'), {once:true});
+      ok = false;
+    }
+  });
+  if (n===2 && !document.querySelector('#parents-wrap > div')) {
+    showErr('Please add at least one parent or guardian.'); return false;
+  }
+  if (!ok) {
+    showErr('Please fill in all required fields (highlighted in red).');
+    box.querySelector('.field-err')?.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  return ok;
+}
+function showErr(m) {
+  document.getElementById('err-txt').textContent = m;
+  document.getElementById('err-banner').classList.remove('hidden');
+  setTimeout(() => document.getElementById('err-banner').classList.add('hidden'), 7000);
+}
+function clearErr() { document.getElementById('err-banner').classList.add('hidden'); }
+
+// ── FILE UPLOAD ───────────────────────────────────────────────
+function onFileSelect(input) {
+  const f = input.files[0]; if (!f) return;
+  if (f.size > 5*1024*1024) {
+    showErr('File is too large. Please upload a file under 5 MB.');
+    input.value=''; return;
+  }
+  const z = document.getElementById('upload-zone');
+  z.classList.add('ok');
+  document.getElementById('upload-lbl').innerHTML =
+    `✅ <strong>${f.name}</strong> (${(f.size/1024).toFixed(0)} KB) — ready`;
+}
+
+async function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ── REVIEW SUMMARY ────────────────────────────────────────────
+function buildReview() {
+  const fn = g('familyName'), city = g('city');
+  const parents  = [...document.querySelectorAll('#parents-wrap > div')].map(d=>({
+    name:d.querySelector('[name="p_name"]').value, rel:d.querySelector('[name="p_rel"]').value }));
+  const children = [...document.querySelectorAll('#children-wrap > div')].map(d=>({
+    name:d.querySelector('[name="c_name"]').value, grade:d.querySelector('[name="c_grade"]').value }));
+  const acts=chk('activity'), clubs=chk('club'), vols=chk('vol');
+
+  const rows = [
+    ['Family',            `${fn} Family — ${city}`],
+    ['Parents/Guardians', parents.map(p=>p.name+(p.rel?` (${p.rel})`:'')).join(' • ')||'—'],
+    ['Children',          children.map(c=>c.name+(c.grade?` (${c.grade})`:'')).join(' • ')||'None added'],
+    acts.length  ? ['Activities',     acts.join(', ')]  : null,
+    clubs.length ? ['Clubs/Co-ops',   clubs.join(', ')] : null,
+    vols.length  ? ['Volunteer Roles', vols.join(', ')] : null,
+  ].filter(Boolean);
+
+  document.getElementById('review-box').innerHTML = rows.map(([k,v])=>`
+    <div>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">${k}</p>
+      <p class="text-gray-800 text-sm">${v}</p>
+    </div>`).join('');
+}
+
+// ── DATA COLLECTION ───────────────────────────────────────────
+function collect() {
+  const parents = [...document.querySelectorAll('#parents-wrap > div')].map(d=>({
+    name:           d.querySelector('[name="p_name"]').value.trim(),
+    nickname:       d.querySelector('[name="p_nick"]').value.trim(),
+    email:          d.querySelector('[name="p_email"]').value.trim(),
+    phone:          d.querySelector('[name="p_phone"]').value.trim(),
+    relationship:   d.querySelector('[name="p_rel"]').value,
+    preferredContact: d.querySelector('[name="p_contact"]').value,
+    bloodType:      d.querySelector('[name="p_blood"]').value,
+    occupation:     d.querySelector('[name="p_occ"]').value.trim(),
+    birthday:       d.querySelector('[name="p_bday"]').value.trim(),
+  }));
+
+  const children = [...document.querySelectorAll('#children-wrap > div')].map(d=>({
+    name:        d.querySelector('[name="c_name"]').value.trim(),
+    nickname:    d.querySelector('[name="c_nick"]').value.trim(),
+    birthday:    d.querySelector('[name="c_bday"]').value,
+    gradeLevel:  d.querySelector('[name="c_grade"]').value,
+    bloodType:   d.querySelector('[name="c_blood"]').value,
+    curriculum:  d.querySelector('[name="c_curr"]').value,
+    medicalNotes:d.querySelector('[name="c_med"]').value.trim(),
+  }));
+
+  const skills = {};
+  SKILLS_CATS.forEach(cat => {
+    skills[cat.key] = [...document.querySelectorAll(`input[name="sk_${cat.key}"]:checked`)].map(i=>i.value);
+  });
+  skills.other = g('other-skills');
+
+  return {
+    familyName: g('familyName'),
+    address:{ street:g('street'), barangay:g('barangay'), city:g('city'), province:g('province'), zipCode:g('zipCode') },
+    emergencyContactName:  g('emergName'),
+    emergencyContactPhone: g('emergPhone'),
+    parents, children,
+    activities:    chk('activity'),
+    clubs:         chk('club'),
+    volunteerRoles: chk('vol'),
+    volunteerOther: g('vol-other'),
+    activitySuggestions: g('act-suggest'),
+    growthSuggestions:   g('growth-suggest'),
+    willingToLead: document.getElementById('willing-lead').checked,
+    skills,
+    consent:{
+      data:             document.getElementById('consent-data').checked,
+      photo:            document.getElementById('consent-photo').checked,
+      fileContribution: document.getElementById('consent-files').checked,
+    },
+  };
+}
+
+// ── SUBMISSION ────────────────────────────────────────────────
+async function submitForm() {
+  if (!document.getElementById('consent-data').checked) {
+    showErr('You must agree to the Personal Data Collection Consent to submit.'); return;
+  }
+  const fileInput = document.getElementById('payment-file');
+  if (!fileInput.files || fileInput.files.length===0) {
+    showErr('Please upload your proof of payment before submitting.');
+    document.getElementById('upload-zone').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+  </svg> Submitting…`;
+
+  const payload = collect();
+
+  try {
+    const file = fileInput.files[0];
+    payload.paymentProof = { name:file.name, mimeType:file.type, base64: await toBase64(file) };
+  } catch(e) {
+    showErr('Could not read the uploaded file. Please try again.');
+    resetBtn(btn); return;
+  }
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('reg-form').classList.add('hidden');
+      document.getElementById('progress-area').classList.add('hidden');
+      document.getElementById('err-banner').classList.add('hidden');
+      document.getElementById('success-screen').classList.remove('hidden');
+      document.getElementById('success-id').textContent = 'Your Family ID: ' + data.familyId;
+      top0();
+    } else { throw new Error(data.error||'Submission failed'); }
+  } catch(err) {
+    resetBtn(btn);
+    showErr('Could not reach the server. Please check your connection and try again. Your data is preserved.');
+    console.error(err);
+  }
+}
+
+function resetBtn(btn) {
+  btn.disabled = false;
+  btn.innerHTML = `<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    Submit Registration`;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+const g   = id => (document.getElementById(id)?.value||'').trim();
+const chk = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i=>i.value);
+
+window.addEventListener('beforeunload', e => {
+  if (step>1) { e.preventDefault(); e.returnValue=''; }
+});
+</script>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-12 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-3">Negros Oriental Homeschool Community · Est. 2023</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhomeschoolershub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr Homeschoolers Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

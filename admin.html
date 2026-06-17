@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+    }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(150deg,#FEF3EE 0%,#f9f9f9 60%,#fdf5ef 100%); min-height:100vh; }
+    .chip { display: inline-flex; align-items: center; gap: .25rem;
+            padding: .2rem .6rem; border-radius: 999px;
+            font-size: .7rem; font-weight: 600; white-space: nowrap; }
+    .chip-green { background:#d1fae5; color:#065f46; }
+    .chip-gray  { background:#f3f4f6; color:#6b7280; }
+    .chip-amber { background:#fef3c7; color:#92400e; }
+    .chip-red   { background:#fee2e2; color:#991b1b; }
+    .row-hover:hover { background: var(--t-lt); cursor: pointer; }
+    #detail-panel { transition: transform .3s ease, opacity .3s ease; }
+    #detail-panel.hidden-panel { transform: translateY(20px); opacity:0; pointer-events:none; }
+    .tag { display:inline-block; font-size:.7rem; padding:.15rem .5rem;
+           border-radius:999px; background:var(--t-pal); color:var(--t-dk); margin:.1rem; }
+    .focus-t:focus { outline:none; border-color:var(--t)!important; box-shadow:0 0 0 2px var(--t-pal)!important; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ LOGIN GATE ═══ -->
+<div id="login-gate" class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-8 w-full max-w-sm text-center">
+    <div class="w-12 h-12 rounded-xl bg-[#B5451B] flex items-center justify-center mx-auto mb-4">
+      <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+      </svg>
+    </div>
+    <h1 class="text-lg font-bold text-[#8B3214] mb-1">Admin Dashboard</h1>
+    <p class="text-sm text-gray-500 mb-5">NegOr HS Hub · Membership Portal</p>
+    <div class="mb-3">
+      <label class="block text-xs font-medium text-gray-600 mb-1 text-left">Admin Access Token</label>
+      <input id="token-input" type="password" placeholder="Paste your admin token here"
+             class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none
+                    focus-t"
+             onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <p id="login-err" class="hidden text-xs text-red-600 mb-2">Invalid token. Please try again.</p>
+    <button onclick="doLogin()"
+            class="w-full py-2.5 bg-[#B5451B] text-white rounded-xl text-sm font-semibold hover:bg-[#8B3214] transition">
+      Access Dashboard
+    </button>
+    <p class="text-xs text-gray-400 mt-4">
+      Or add <code class="bg-gray-100 px-1 rounded">?token=YOUR_TOKEN</code> to the URL.
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ MAIN DASHBOARD ═══ -->
+<div id="dashboard" class="hidden min-h-screen">
+
+  <!-- ── Header ── -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="index.html">
+          <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-8 w-auto object-contain flex-shrink-0"
+               onerror="this.style.display='none'" />
+        </a>
+        <div>
+          <p class="text-sm font-bold text-[#8B3214] leading-none">NegOr HS Hub</p>
+          <p class="text-xs text-gray-400">Membership Dashboard</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="loadData()"
+                class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200
+                       rounded-lg text-gray-600 hover:bg-gray-50 transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </button>
+        <a href="index.html"
+           class="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-800 transition">
+          ← Hub
+        </a>
+        <button onclick="doLogout()"
+                class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-800 transition">
+          Sign out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- ── Stats Cards ── -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Total Families</p>
+        <p id="stat-total" class="text-3xl font-bold text-[#8B3214]">—</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Active</p>
+        <p id="stat-active" class="text-3xl font-bold text-[#B5451B]">—</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Photo Consent</p>
+        <p id="stat-photo" class="text-3xl font-bold text-amber-600">—</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Joined This Month</p>
+        <p id="stat-month" class="text-3xl font-bold text-blue-600">—</p>
+      </div>
+    </div>
+
+    <!-- ── Filters & Search ── -->
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex-1 relative">
+          <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input id="search-input" type="text" placeholder="Search by family name, parent name, or city…"
+                 class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none
+                        focus-t"
+                 oninput="applyFilters()" />
+        </div>
+        <select id="filter-consent" onchange="applyFilters()"
+                class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none
+                       focus-t bg-white text-gray-600">
+          <option value="">All Consent</option>
+          <option value="yes-photo">Photo Consent ✓</option>
+          <option value="no-photo">No Photo Consent</option>
+          <option value="yes-data">Data Consent ✓</option>
+        </select>
+        <select id="filter-status" onchange="applyFilters()"
+                class="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none
+                       focus-t bg-white text-gray-600">
+          <option value="">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+      <p id="result-count" class="text-xs text-gray-400 mt-2"></p>
+    </div>
+
+    <!-- ── Main Layout: Table + Detail Panel ── -->
+    <div class="flex gap-4 items-start">
+
+      <!-- Family Table -->
+      <div class="flex-1 min-w-0 bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div id="loading-indicator" class="py-16 text-center text-sm text-gray-400">
+          <svg class="w-6 h-6 animate-spin mx-auto mb-2 text-[#B5451B]" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Loading families…
+        </div>
+        <div id="table-wrap" class="hidden overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-[#8B3214] text-white text-left">
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide">Family</th>
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide hidden md:table-cell">Parents</th>
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide hidden sm:table-cell">Children</th>
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide hidden lg:table-cell">City</th>
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide hidden lg:table-cell">Registered</th>
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide">Status</th>
+                <th class="px-4 py-3 font-medium text-xs uppercase tracking-wide hidden md:table-cell">Consents</th>
+              </tr>
+            </thead>
+            <tbody id="family-table-body"></tbody>
+          </table>
+          <div id="empty-state" class="hidden py-16 text-center text-sm text-gray-400">
+            <p class="text-2xl mb-2">🔍</p>
+            No families match your search.
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div id="detail-panel"
+           class="hidden-panel hidden w-96 flex-shrink-0 bg-white rounded-xl border border-gray-200 sticky top-20 max-h-[calc(100vh-7rem)] overflow-y-auto">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white">
+          <p class="text-sm font-semibold text-[#8B3214]">Family Profile</p>
+          <button onclick="closeDetail()" class="text-gray-400 hover:text-gray-600 text-lg font-light leading-none">✕</button>
+        </div>
+        <div id="detail-content" class="p-4 space-y-4 text-sm"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div><!-- /dashboard -->
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  ⚙️  CONFIGURATION  — replace with your Apps Script web app URL
+// ─────────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+// Same URL as index.html — this is your deployed Google Apps Script web app
+
+// ─────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────
+let adminToken  = '';
+let allFamilies = [];
+let selectedId  = null;
+
+// ─────────────────────────────────────────────────────────────
+//  INIT — check URL token on load
+// ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+  if (urlToken) {
+    adminToken = urlToken;
+    document.getElementById('token-input').value = urlToken;
+    enterDashboard();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+//  LOGIN / LOGOUT
+// ─────────────────────────────────────────────────────────────
+async function doLogin() {
+  const t = document.getElementById('token-input').value.trim();
+  if (!t) return;
+  adminToken = t;
+  document.getElementById('login-err').classList.add('hidden');
+  // We'll validate the token by actually loading data
+  const ok = await enterDashboard();
+  if (!ok) {
+    document.getElementById('login-err').classList.remove('hidden');
+    adminToken = '';
+  }
+}
+
+async function enterDashboard() {
+  document.getElementById('login-gate').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  const ok = await loadData();
+  if (!ok) {
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('login-gate').classList.remove('hidden');
+  }
+  return ok;
+}
+
+function doLogout() {
+  adminToken  = '';
+  allFamilies = [];
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('login-gate').classList.remove('hidden');
+  document.getElementById('token-input').value = '';
+  // Clean URL
+  history.replaceState({}, document.title, location.pathname);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DATA LOADING
+// ─────────────────────────────────────────────────────────────
+async function loadData() {
+  showLoading(true);
+  try {
+    const [famResp, statsResp] = await Promise.all([
+      api('getFamilies'),
+      api('getStats'),
+    ]);
+
+    if (!famResp.success) return false;
+
+    allFamilies = famResp.data || [];
+    renderStats(statsResp.data || {});
+    applyFilters();
+    showLoading(false);
+    return true;
+
+  } catch (err) {
+    console.error('Load error:', err);
+    showLoading(false);
+    return false;
+  }
+}
+
+async function loadFamilyDetail(familyId) {
+  const resp = await api('getFamily', { familyId });
+  if (!resp.success) return null;
+  return resp.data;
+}
+
+async function api(action, extra = {}) {
+  const params = new URLSearchParams({ action, token: adminToken, ...extra });
+  const url    = APPS_SCRIPT_URL + '?' + params.toString();
+  const res    = await fetch(url);
+  return res.json();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  RENDER STATS
+// ─────────────────────────────────────────────────────────────
+function renderStats(stats) {
+  document.getElementById('stat-total').textContent  = stats.total        ?? '—';
+  document.getElementById('stat-active').textContent = stats.active       ?? '—';
+  document.getElementById('stat-photo').textContent  = stats.photo_consent ?? '—';
+  document.getElementById('stat-month').textContent  = stats.this_month   ?? '—';
+}
+
+// ─────────────────────────────────────────────────────────────
+//  TABLE RENDERING & FILTERING
+// ─────────────────────────────────────────────────────────────
+function applyFilters() {
+  const q       = (document.getElementById('search-input').value || '').toLowerCase();
+  const consent = document.getElementById('filter-consent').value;
+  const status  = document.getElementById('filter-status').value;
+
+  const filtered = allFamilies.filter(f => {
+    const txt = [
+      f['family_name'], f['city_/_municipality'], f['parent_names'],
+    ].join(' ').toLowerCase();
+
+    if (q && !txt.includes(q)) return false;
+    if (status && f['status'] !== status) return false;
+    if (consent === 'yes-photo'  && f['consent_-_photo']        !== 'Yes') return false;
+    if (consent === 'no-photo'   && f['consent_-_photo']        === 'Yes') return false;
+    if (consent === 'yes-data'   && f['consent_-_data']         !== 'Yes') return false;
+    return true;
+  });
+
+  renderTable(filtered);
+  document.getElementById('result-count').textContent =
+    filtered.length + ' of ' + allFamilies.length + ' families shown';
+}
+
+function renderTable(families) {
+  const tbody = document.getElementById('family-table-body');
+  const empty = document.getElementById('empty-state');
+
+  if (families.length === 0) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  tbody.innerHTML = families.map(f => {
+    const fid      = f['family_id'] || '';
+    const fname    = f['family_name'] || '—';
+    const parents  = f['parent_names'] || '—';
+    const pCount   = f['parent_count'] || '0';
+    const cCount   = f['child_count'] || '0';
+    const city     = f['city_/_municipality'] || '—';
+    const date     = formatDate(f['registration_date']);
+    const status   = f['status'] || 'Active';
+    const photo    = f['consent_-_photo'] === 'Yes';
+    const data_c   = f['consent_-_data']  === 'Yes';
+    const statusChip = status === 'Active'
+      ? '<span class="chip chip-green">Active</span>'
+      : status === 'Inactive'
+        ? '<span class="chip chip-gray">Inactive</span>'
+        : '<span class="chip chip-amber">Pending</span>';
+    const isSelected = fid === selectedId ? 'bg-[#FEF3EE]' : '';
+
+    return `
+      <tr class="row-hover border-t border-gray-100 ${isSelected}" onclick="openDetail('${fid}')" id="row-${fid}">
+        <td class="px-4 py-3">
+          <p class="font-semibold text-gray-900">${fname} Family</p>
+          <p class="text-xs text-gray-400">${fid}</p>
+        </td>
+        <td class="px-4 py-3 hidden md:table-cell">
+          <p class="text-gray-700">${parents}</p>
+          <p class="text-xs text-gray-400">${pCount} parent${pCount!=1?'s':''}</p>
+        </td>
+        <td class="px-4 py-3 hidden sm:table-cell">
+          <span class="text-gray-700">${cCount} child${cCount!=1?'ren':''}</span>
+        </td>
+        <td class="px-4 py-3 hidden lg:table-cell text-gray-600">${city}</td>
+        <td class="px-4 py-3 hidden lg:table-cell text-gray-500 text-xs">${date}</td>
+        <td class="px-4 py-3">${statusChip}</td>
+        <td class="px-4 py-3 hidden md:table-cell">
+          <div class="flex flex-col gap-0.5">
+            <span class="chip ${data_c?'chip-green':'chip-gray'}">${data_c?'✓ Data':'Data'}</span>
+            <span class="chip ${photo?'chip-green':'chip-gray'}">${photo?'✓ Photo':'Photo'}</span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DETAIL PANEL
+// ─────────────────────────────────────────────────────────────
+async function openDetail(familyId) {
+  // Highlight row
+  document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-[#FEF3EE]'));
+  document.getElementById('row-' + familyId)?.classList.add('bg-[#FEF3EE]');
+
+  selectedId = familyId;
+  const panel   = document.getElementById('detail-panel');
+  const content = document.getElementById('detail-content');
+
+  panel.classList.remove('hidden');
+  panel.classList.remove('hidden-panel');
+  content.innerHTML = `
+    <div class="text-center py-8 text-gray-400 text-sm">
+      <svg class="w-5 h-5 animate-spin mx-auto mb-2 text-[#B5451B]" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>Loading…
+    </div>`;
+
+  const detail = await loadFamilyDetail(familyId);
+  if (!detail) { content.innerHTML = '<p class="text-red-600 text-sm">Could not load family details.</p>'; return; }
+
+  const { family, parents, children } = detail;
+  const f  = family  || {};
+  const ps = parents  || [];
+  const cs = children || [];
+
+  const section = (title, html) => `
+    <div>
+      <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">${title}</p>
+      ${html}
+    </div>`;
+
+  const field = (label, val) => val ? `
+    <div class="flex gap-2 text-sm">
+      <span class="text-gray-400 w-24 flex-shrink-0 text-xs pt-0.5">${label}</span>
+      <span class="text-gray-800">${val}</span>
+    </div>` : '';
+
+  const tagList = str => str
+    ? str.split(',').map(s => s.trim()).filter(Boolean).map(s => `<span class="tag">${s}</span>`).join('')
+    : '<span class="text-gray-400 text-xs">None</span>';
+
+  const statusColor = f['status'] === 'Active' ? 'chip-green' : f['status'] === 'Inactive' ? 'chip-gray' : 'chip-amber';
+
+  content.innerHTML = [
+    // Header
+    `<div class="flex items-start justify-between">
+       <div>
+         <p class="font-bold text-[#8B3214] text-base">${f['family_name'] || '—'} Family</p>
+         <p class="text-xs text-gray-400">${f['family_id'] || ''} · Registered ${formatDate(f['registration_date'])}</p>
+       </div>
+       <span class="chip ${statusColor}">${f['status'] || 'Active'}</span>
+     </div>`,
+
+    section('Address', `
+      <div class="space-y-1">
+        ${field('Street', f['street_address'])}
+        ${field('Barangay', f['barangay'])}
+        ${field('City', f['city_/_municipality'])}
+        ${field('Province', f['province'])}
+        ${field('ZIP', f['zip_code'])}
+      </div>`),
+
+    section('Emergency Contact', `
+      <div class="space-y-1">
+        ${field('Name',  f['emergency_contact_name'])}
+        ${field('Phone', f['emergency_contact_phone'])}
+      </div>`),
+
+    section('Parents & Guardians', ps.length === 0 ? '<p class="text-gray-400 text-xs">No parents recorded.</p>' :
+      ps.map(p => `
+        <div class="border border-gray-100 rounded-lg p-3 mb-2 space-y-1">
+          <p class="font-medium text-gray-900">${p['full_name'] || '—'}</p>
+          <div class="space-y-0.5">
+            ${field('Role',      p['relationship'])}
+            ${field('Email',     p['email'])}
+            ${field('Phone',     p['phone'])}
+            ${field('Contact',   p['preferred_contact'])}
+            ${field('Occupation',p['occupation'])}
+          </div>
+        </div>`).join('')),
+
+    section('Children', cs.length === 0 ? '<p class="text-gray-400 text-xs">No children recorded.</p>' :
+      cs.map(c => `
+        <div class="border border-gray-100 rounded-lg p-3 mb-2 space-y-1">
+          <p class="font-medium text-gray-900">${c['full_name'] || '—'}</p>
+          ${field('Birthday',    c['date_of_birth'])}
+          ${field('Grade',       c['grade_level'])}
+          ${field('Curriculum',  c['curriculum_approach'])}
+          ${c['medical_/_allergy_notes'] ? field('Medical', `<span class="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-xs">${c['medical_/_allergy_notes']}</span>`) : ''}
+        </div>`).join('')),
+
+    section('Activities & Clubs', `
+      <p class="text-xs text-gray-400 mb-1">Activities</p>
+      <div class="mb-2">${tagList(f['activities_interested'])}</div>
+      <p class="text-xs text-gray-400 mb-1">Clubs / Co-ops</p>
+      <div>${tagList(f['clubs_/_co-ops_interested'])}</div>`),
+
+    section('Volunteer Roles', `<div>${tagList(f['volunteer_roles'])}</div>`),
+
+    section('Skills & Strengths', `
+      ${skillRow('Arts',         f['skills_-_arts_&_creative'])}
+      ${skillRow('Technology',   f['skills_-_technology'])}
+      ${skillRow('Practical',    f['skills_-_practical_life'])}
+      ${skillRow('Business',     f['skills_-_business_&_finance'])}
+      ${skillRow('Communication',f['skills_-_communication'])}
+      ${skillRow('Organization', f['skills_-_organization'])}
+      ${skillRow('Health',       f['skills_-_health_&_wellness'])}
+      ${f['skills_-_other'] ? `<div><span class="text-xs text-gray-400">Other:</span> <span class="text-xs text-gray-700">${f['skills_-_other']}</span></div>` : ''}`),
+
+    section('Consent', `
+      <div class="flex flex-col gap-1">
+        ${consentBadge('Personal Data',         f['consent_-_data'])}
+        ${consentBadge('Photo & Media',          f['consent_-_photo'])}
+        ${consentBadge('File Contribution',      f['consent_-_file_contribution'])}
+      </div>`),
+
+  ].join('<div class="border-t border-gray-100"></div>');
+}
+
+function skillRow(label, val) {
+  if (!val || val.trim() === '') return '';
+  return `<div class="mb-1"><span class="text-xs text-gray-400">${label}:</span> ${
+    val.split(',').map(s => `<span class="tag">${s.trim()}</span>`).join('')
+  }</div>`;
+}
+
+function consentBadge(label, val) {
+  const yes = val === 'Yes';
+  return `<div class="flex items-center gap-2">
+    <span class="chip ${yes?'chip-green':'chip-gray'}">${yes?'✓':'-'}</span>
+    <span class="text-xs text-gray-700">${label}</span>
+  </div>`;
+}
+
+function closeDetail() {
+  selectedId = null;
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('hidden-panel');
+  setTimeout(() => panel.classList.add('hidden'), 300);
+  document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-[#FEF3EE]'));
+}
+
+// ─────────────────────────────────────────────────────────────
+//  UTILITIES
+// ─────────────────────────────────────────────────────────────
+function showLoading(show) {
+  document.getElementById('loading-indicator').classList.toggle('hidden', !show);
+  document.getElementById('table-wrap').classList.toggle('hidden', show);
+}
+
+function formatDate(raw) {
+  if (!raw) return '—';
+  try {
+    return new Date(raw).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+  } catch { return raw; }
+}
+</script>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-12 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-3">Negros Oriental Homeschool Community · Est. 2023</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhomeschoolershub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr Homeschoolers Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

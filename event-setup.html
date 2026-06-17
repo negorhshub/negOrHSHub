@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Setup — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+      --ev:   #d97706;
+      --ev-dk:#b45309;
+      --ev-lt:#fffbeb;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#FEF3EE 0%,#f9f9f9 60%,#fdf5ef 100%); min-height:100vh; }
+
+    /* Tabs */
+    .tab-btn { padding:.5rem 1.25rem; font-size:.875rem; font-weight:500; border-bottom:2px solid transparent;
+               color:#6b7280; cursor:pointer; transition:color .15s, border-color .15s; white-space:nowrap; }
+    .tab-btn.active { color:var(--t); border-color:var(--t); font-weight:600; }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+
+    /* Status badges */
+    .badge { display:inline-flex; align-items:center; gap:.2rem; padding:.2rem .55rem; border-radius:999px;
+             font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    .badge-draft  { background:#f3f4f6; color:#6b7280; }
+    .badge-active { background:#dcfce7; color:#15803d; }
+    .badge-closed { background:#fee2e2; color:#991b1b; }
+
+    /* Table */
+    .tbl th { padding:.6rem 1rem; font-size:.7rem; font-weight:700; text-transform:uppercase;
+              letter-spacing:.06em; color:#9ca3af; background:#fafafa; border-bottom:1px solid #f3f4f6; }
+    .tbl td { padding:.75rem 1rem; font-size:.8125rem; color:#374151; border-bottom:1px solid #f9fafb; vertical-align:top; }
+    .tbl tr:hover td { background:var(--t-lt); }
+
+    /* Inputs */
+    .label { display:block; font-size:.8rem; font-weight:500; color:#374151; margin-bottom:.25rem; }
+    .inp   { width:100%; padding:.6rem .875rem; border:1px solid #d1d5db; border-radius:.625rem;
+             font-size:.875rem; outline:none; background:white; transition:border-color .15s, box-shadow .15s; }
+    .inp:focus { border-color:var(--t); box-shadow:0 0 0 3px rgba(181,69,27,.12); }
+    .focus-t:focus { outline:none; border-color:var(--t)!important; box-shadow:0 0 0 2px var(--t-pal)!important; }
+
+    /* Buttons */
+    .btn-p  { display:inline-flex; align-items:center; gap:.3rem; padding:.6rem 1.2rem;
+              background:var(--t); color:#fff; border-radius:.75rem; font-size:.8125rem; font-weight:600;
+              border:none; cursor:pointer; transition:background .15s; }
+    .btn-p:hover  { background:var(--t-dk); }
+    .btn-p:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-sm { display:inline-flex; align-items:center; gap:.2rem; padding:.3rem .7rem;
+              border-radius:.5rem; font-size:.75rem; font-weight:600; cursor:pointer; border:none; transition:background .15s; }
+    .btn-activate { background:#dcfce7; color:#15803d; }
+    .btn-activate:hover { background:#bbf7d0; }
+    .btn-close-ev { background:#fee2e2; color:#991b1b; }
+    .btn-close-ev:hover { background:#fecaca; }
+    .btn-view { background:var(--t-pal); color:var(--t-dk); }
+    .btn-view:hover { background:#F9DDD0; }
+    .btn-copy { background:#eff6ff; color:#1d4ed8; }
+    .btn-copy:hover { background:#dbeafe; }
+    .btn-outline { background:white; border:1px solid #e5e7eb; color:#4b5563; border-radius:.625rem;
+                   padding:.5rem 1rem; font-size:.8125rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-outline:hover { background:#f9fafb; }
+
+    /* Form drawer */
+    #new-event-form { display:none; }
+    #new-event-form.open { display:block; }
+
+    /* Role pills */
+    .role-pill { display:inline-block; padding:.15rem .5rem; border-radius:999px; font-size:.7rem; font-weight:600; }
+    .role-organizer { background:#ede9fe; color:#5b21b6; }
+    .role-volunteer { background:#fef3c7; color:#92400e; }
+    .role-attendee  { background:#f3f4f6; color:#6b7280; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN GATE ═══ -->
+<div id="login-gate" class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-8 w-full max-w-sm text-center">
+    <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style="background:var(--ev)">
+      <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <h1 class="text-lg font-bold text-gray-900 mb-1">Event Coordinator Panel</h1>
+    <p class="text-sm text-gray-500 mb-5">NegOr HS Hub · Event Management</p>
+    <div class="mb-3">
+      <label class="block text-xs font-medium text-gray-600 mb-1 text-left">Coordinator Access Token</label>
+      <input id="token-input" type="password" placeholder="Paste your coordinator token"
+             class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus-t"
+             onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <p id="login-err" class="hidden text-xs text-red-600 mb-2">Invalid token. Please try again.</p>
+    <button onclick="doLogin()" class="btn-p w-full justify-center py-2.5" style="background:var(--ev)">
+      Access Panel
+    </button>
+    <p class="text-xs text-gray-400 mt-4">
+      Or add <code class="bg-gray-100 px-1 rounded">?token=YOUR_TOKEN</code> to the URL.
+    </p>
+  </div>
+</div>
+
+<!-- ═══ MAIN PANEL ═══ -->
+<div id="dashboard" class="hidden min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <a href="index.html">
+          <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-8 w-auto object-contain flex-shrink-0"
+               onerror="this.style.display='none'" />
+        </a>
+        <div>
+          <p class="text-sm font-bold text-gray-900 leading-none">NegOr HS Hub</p>
+          <p class="text-xs text-gray-400">Event Coordinator Panel</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="loadEvents()" class="btn-outline flex items-center gap-1.5 text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </button>
+        <button onclick="doLogout()" class="text-xs text-red-600 hover:text-red-800 font-medium px-2 py-1.5">Sign out</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="max-w-6xl mx-auto px-4 flex gap-0 border-t border-gray-100">
+      <button class="tab-btn active" onclick="switchTab('events')">📅 My Events</button>
+      <button class="tab-btn" onclick="switchTab('registrations')">👥 Registrations</button>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- ═══ TAB: EVENTS ═══ -->
+    <div id="tab-events" class="tab-pane active">
+
+      <!-- New event toggle -->
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Events</h2>
+          <p class="text-xs text-gray-400 mt-0.5">Create and manage quarterly huddles and special events.</p>
+        </div>
+        <button onclick="toggleNewEventForm()" class="btn-p">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          New Event
+        </button>
+      </div>
+
+      <!-- New Event Form -->
+      <div id="new-event-form" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+        <h3 class="text-sm font-bold text-gray-800 mb-4">Create New Event</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- Title -->
+          <div class="sm:col-span-2">
+            <label class="label">Event Title <span class="text-red-500">*</span></label>
+            <input id="ne-title" type="text" class="inp" placeholder="e.g., Learners' Day 2026" />
+          </div>
+
+          <!-- Date, Start Time, End Time (3 columns) -->
+          <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="label">Event Date <span class="text-red-500">*</span></label>
+              <input id="ne-date" type="date" class="inp" />
+            </div>
+            <div>
+              <label class="label">Start Time</label>
+              <input id="ne-start-time" type="time" class="inp" />
+            </div>
+            <div>
+              <label class="label">End Time</label>
+              <input id="ne-end-time" type="time" class="inp" />
+            </div>
+          </div>
+
+          <!-- Venue -->
+          <div class="sm:col-span-2">
+            <label class="label">Venue <span class="text-red-500">*</span></label>
+            <input id="ne-venue" type="text" class="inp" placeholder="e.g., Rizal Blvd, Dumaguete" />
+          </div>
+
+          <!-- Fee and Registration Type -->
+          <div>
+            <label class="label">Registration Fee (₱) <span class="text-red-500">*</span></label>
+            <input id="ne-fee" type="number" class="inp" placeholder="e.g., 200" min="0" />
+          </div>
+          <div>
+            <label class="label">Fee is charged</label>
+            <select id="ne-reg-type" class="inp bg-white">
+              <option value="per_family">Per family (flat fee)</option>
+              <option value="per_adult">Per adult</option>
+              <option value="per_child">Per child</option>
+              <option value="per_pax">Per person (adults + children)</option>
+            </select>
+          </div>
+
+          <!-- Payee -->
+          <div class="sm:col-span-2">
+            <label class="label">Payee Name</label>
+            <input id="ne-payee" type="text" class="inp" value="Debbie Uy Matiao" />
+          </div>
+
+          <!-- QR Code Upload -->
+          <div class="sm:col-span-2">
+            <label class="label">GCash / InstaPay QR Code <span class="text-gray-400 font-normal">(optional — families will scan this to pay)</span></label>
+            <div id="ne-qr-zone"
+                 onclick="document.getElementById('ne-qr-file').click()"
+                 class="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition"
+                 style="border-color:#d97706; background:#fffbeb">
+              <p class="text-sm font-medium" style="color:var(--ev)">📷 Click to upload QR code image</p>
+              <p class="text-xs text-gray-400 mt-1">PNG or JPG</p>
+            </div>
+            <img id="ne-qr-preview" class="hidden mt-3 w-28 h-28 object-contain rounded-xl border border-gray-200 mx-auto" />
+            <input type="file" id="ne-qr-file" accept="image/*" class="hidden" onchange="onQrSelect(this)" />
+          </div>
+
+          <!-- Photo Folder URL -->
+          <div class="sm:col-span-2">
+            <label class="label">Photo Folder URL <span class="text-gray-400 font-normal">(optional — Google Drive folder where anyone can upload event photos)</span></label>
+            <input id="ne-photo-folder" type="url" class="inp" placeholder="https://drive.google.com/drive/folders/..." />
+          </div>
+
+          <!-- Description -->
+          <div class="sm:col-span-2">
+            <label class="label">Important Reminders / Notes <span class="text-gray-400 font-normal">(shown prominently on the registration page)</span></label>
+            <textarea id="ne-desc" rows="3" class="inp resize-none" placeholder="What to bring, dress code, things to remember, etc."></textarea>
+          </div>
+
+        </div>
+        <p class="text-xs text-gray-400 mt-3 mb-4">
+          ℹ️ New events are saved as <strong>Draft</strong>. Click <strong>Activate</strong> on the event card to open registration and get the shareable link.
+        </p>
+        <div id="ne-err-box" class="hidden bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-3">
+          <p id="ne-err" class="text-sm text-red-700 font-medium"></p>
+        </div>
+        <div class="flex gap-2">
+          <button id="ne-save-btn" onclick="saveNewEvent()" class="btn-p">Save as Draft</button>
+          <button onclick="toggleNewEventForm()" class="btn-outline">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Events list -->
+      <div id="events-loading" class="text-center py-12 text-gray-400 text-sm">
+        <svg class="w-5 h-5 animate-spin mx-auto mb-2 text-[#B5451B]" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Loading events…
+      </div>
+      <div id="events-empty" class="hidden text-center py-12 text-gray-400 text-sm">
+        <p class="text-3xl mb-2">📅</p>
+        No events yet. Create your first event above!
+      </div>
+      <div id="events-grid" class="hidden space-y-3"></div>
+
+    </div><!-- /tab-events -->
+
+    <!-- ═══ TAB: REGISTRATIONS ═══ -->
+    <div id="tab-registrations" class="tab-pane">
+
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900">Registrations</h2>
+          <p class="text-xs text-gray-400 mt-0.5">View families signed up for an event.</p>
+        </div>
+        <div>
+          <label class="label" style="margin-bottom:.2rem">Event</label>
+          <select id="reg-event-select" class="inp bg-white" style="width:auto;min-width:220px" onchange="loadRegistrations()">
+            <option value="">— Select an event —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Stats strip -->
+      <div id="reg-stats" class="hidden flex items-center gap-4 mb-4 bg-white rounded-xl border border-gray-200 px-5 py-3 text-sm">
+        <div><span id="reg-count" class="text-2xl font-bold" style="color:var(--t)">—</span> <span class="text-gray-500 text-xs">registrations</span></div>
+        <div class="h-6 border-l border-gray-200"></div>
+        <div><span id="reg-organizers" class="font-semibold text-purple-700">—</span> <span class="text-gray-400 text-xs">organizers</span></div>
+        <div><span id="reg-volunteers" class="font-semibold text-amber-700">—</span> <span class="text-gray-400 text-xs">volunteers</span></div>
+        <div><span id="reg-attendees" class="font-semibold text-gray-700">—</span> <span class="text-gray-400 text-xs">attendees</span></div>
+      </div>
+
+      <!-- Search -->
+      <div class="mb-4">
+        <input id="reg-search" type="text" class="inp" placeholder="Search by family name, parent, or role…"
+               oninput="filterRegistrations()" />
+      </div>
+
+      <!-- Registrations table -->
+      <div id="regs-loading" class="hidden text-center py-12 text-gray-400 text-sm">
+        <svg class="w-5 h-5 animate-spin mx-auto mb-2 text-[#B5451B]" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Loading registrations…
+      </div>
+      <div id="regs-empty" class="hidden text-center py-12 text-gray-400 text-sm">
+        <p class="text-3xl mb-2">🔍</p>
+        <span id="regs-empty-msg">Select an event above to view registrations.</span>
+      </div>
+      <div id="regs-table-wrap" class="hidden bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="tbl w-full">
+            <thead>
+              <tr>
+                <th class="text-left">Family</th>
+                <th class="text-left">Parents / Guardians</th>
+                <th class="text-left hidden sm:table-cell">Children</th>
+                <th class="text-left hidden md:table-cell">Role</th>
+                <th class="text-left hidden lg:table-cell">Notes</th>
+                <th class="text-left hidden md:table-cell">Proof</th>
+                <th class="text-left hidden md:table-cell">Paid?</th>
+                <th class="text-left hidden lg:table-cell">Date</th>
+              </tr>
+            </thead>
+            <tbody id="regs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab-registrations -->
+
+  </div>
+</div><!-- /dashboard -->
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+
+let coordToken    = '';
+let allEvents     = [];
+let allRegs       = [];
+let activeEventId = null;
+let qrFileData    = null;  // QR code for new event form
+let editEventId   = null;  // null = create mode, string = edit mode
+
+// ── LOGIN ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+  if (urlToken) { document.getElementById('token-input').value = urlToken; doLogin(); return; }
+  const saved = localStorage.getItem('nhh_coord_token');
+  if (saved) { document.getElementById('token-input').value = saved; doLogin(); }
+});
+
+async function doLogin() {
+  const t = document.getElementById('token-input').value.trim();
+  if (!t) return;
+  coordToken = t;
+  const errEl = document.getElementById('login-err');
+  errEl.classList.add('hidden');
+
+  try {
+    // Validate token with a lightweight check before full data load
+    const params = new URLSearchParams({ action: 'getEvents', token: coordToken });
+    const res  = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+    const data = await res.json();
+
+    if (data.error === 'Unauthorized') {
+      coordToken = '';
+      errEl.textContent = 'Invalid token. Please check and try again.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    // Token is valid (even if data is empty or sheet not set up yet)
+    localStorage.setItem('nhh_coord_token', coordToken);
+    allEvents = data.data || [];
+    document.getElementById('login-gate').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    renderEvents();
+    populateEventSelector();
+
+    // Warn if events sheet needs setup
+    if (data._warning) {
+      console.warn(data._warning);
+      // Show a gentle notice in the events tab
+      document.getElementById('events-loading').classList.add('hidden');
+      document.getElementById('events-empty').classList.remove('hidden');
+      document.getElementById('events-empty').innerHTML = `
+        <p class="text-3xl mb-2">⚙️</p>
+        <p class="font-semibold text-gray-700 mb-1">Events sheet not set up yet</p>
+        <p class="text-sm text-gray-500 max-w-xs mx-auto">Run <code class="bg-gray-100 px-1 rounded">setupEventsSpreadsheet()</code> in your Apps Script editor, then refresh this page.</p>`;
+    }
+  } catch(err) {
+    coordToken = '';
+    errEl.textContent = 'Could not reach the server. Check your internet connection.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+function doLogout() {
+  coordToken = ''; allEvents = []; allRegs = [];
+  localStorage.removeItem('nhh_coord_token');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('login-gate').classList.remove('hidden');
+  history.replaceState({}, document.title, location.pathname);
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── LOAD EVENTS ──────────────────────────────────────────────
+async function loadEvents() {
+  try {
+    const resp = await api('getEvents');
+    if (!resp.success) return false;
+    allEvents = resp.data || [];
+    renderEvents();
+    populateEventSelector();
+    return true;
+  } catch(e) { console.error(e); return false; }
+}
+
+function renderEvents() {
+  const loading = document.getElementById('events-loading');
+  const empty   = document.getElementById('events-empty');
+  const grid    = document.getElementById('events-grid');
+
+  loading.classList.add('hidden');
+
+  if (allEvents.length === 0) {
+    empty.classList.remove('hidden');
+    grid.classList.add('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  grid.classList.remove('hidden');
+
+  // Sort: Active first, then Draft, then Closed
+  const order = { 'Active':0, 'Draft':1, 'Closed':2 };
+  const sorted = [...allEvents].sort((a,b) => (order[a.status]||9) - (order[b.status]||9));
+
+  grid.innerHTML = sorted.map(ev => {
+    const status     = ev['status'] || 'Draft';
+    const badgeCls   = status === 'Active' ? 'badge-active' : status === 'Closed' ? 'badge-closed' : 'badge-draft';
+    const count      = ev['registration_count'] || ev['registration count'] || '0';
+    const regLink    = location.origin + location.pathname.replace('event-setup.html','') + 'event-registration.html?event=' + ev['event_id'];
+    const canActivate = status === 'Draft';
+    const canClose    = status === 'Active';
+
+    return `
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1 flex-wrap">
+            <span class="text-sm font-bold text-gray-900">${ev['event_title'] || '—'}</span>
+            <span class="badge ${badgeCls}">${status}</span>
+          </div>
+          <p class="text-xs text-gray-500">
+            ${ev['event_date']?'📅 '+ev['event_date']+'  ':''}
+            ${ev['venue']?'📍 '+ev['venue']+'  ':''}
+            ${ev['fee_(₱)']?'💳 ₱'+parseFloat(ev['fee_(₱)']).toLocaleString():''}
+          </p>
+          ${ev['description'] ? `<p class="text-xs text-gray-400 mt-1">${ev['description']}</p>` : ''}
+          <p class="text-xs mt-2"><span class="font-semibold" style="color:var(--t)">${count}</span> <span class="text-gray-400">registration${count!=1?'s':''}</span>
+            <span class="text-gray-300 mx-1">·</span>
+            <span class="text-gray-400">ID: ${ev['event_id']}</span>
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 flex-shrink-0">
+          ${canActivate ? `<button onclick="updateStatus('${ev['event_id']}','Active')" class="btn-sm btn-activate">▶ Activate</button>` : ''}
+          ${canClose    ? `<button onclick="updateStatus('${ev['event_id']}','Closed')" class="btn-sm btn-close-ev">■ Close</button>` : ''}
+          <button onclick="openEditEvent('${ev['event_id']}')" class="btn-sm" style="background:#f3f4f6;color:#374151;border:1px solid #e5e7eb">✏️ Edit</button>
+          <button onclick="viewRegistrations('${ev['event_id']}')" class="btn-sm btn-view">👥 Registrations</button>
+          ${status === 'Active' ? `<button onclick="copyLink('${regLink}','${ev['event_id']}')" class="btn-sm btn-copy" id="copy-btn-${ev['event_id']}">🔗 Copy Link</button>` : ''}
+        </div>
+      </div>
+      ${status === 'Active' ? `
+        <div class="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+          <span class="text-xs text-gray-400">Registration link:</span>
+          <code class="text-xs text-gray-600 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 flex-1 truncate">${regLink}</code>
+        </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function populateEventSelector() {
+  const sel = document.getElementById('reg-event-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select an event —</option>' +
+    allEvents.map(ev =>
+      `<option value="${ev['event_id']}" ${ev['event_id']===cur?'selected':''}>${ev['event_title']} (${ev['status']})</option>`
+    ).join('');
+  if (cur) sel.value = cur;
+}
+
+// ── STATUS UPDATE ─────────────────────────────────────────────
+async function updateStatus(eventId, newStatus) {
+  const label = newStatus === 'Active' ? 'activate' : 'close';
+  if (!confirm(`Are you sure you want to ${label} this event?`)) return;
+  try {
+    const resp = await post({ _type:'updateEvent', _token:coordToken, eventId, status:newStatus });
+    if (resp.success) { await loadEvents(); }
+    else              { alert('Failed to update event: ' + (resp.error||'Unknown error')); }
+  } catch(e) { alert('Network error. Please try again.'); }
+}
+
+// ── QR UPLOAD ────────────────────────────────────────────────
+function onQrSelect(input) {
+  const f = input.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    qrFileData = { name: f.name, mimeType: f.type, base64: e.target.result.split(',')[1] };
+    const preview = document.getElementById('ne-qr-preview');
+    preview.src = e.target.result;
+    preview.classList.remove('hidden');
+    document.getElementById('ne-qr-zone').innerHTML =
+      `<p class="text-sm font-medium text-green-700">✅ ${f.name} selected</p>
+       <p class="text-xs text-gray-400 mt-1">Click to change</p>`;
+  };
+  reader.readAsDataURL(f);
+}
+
+// ── CREATE / EDIT EVENT ──────────────────────────────────────
+function toggleNewEventForm() {
+  const f = document.getElementById('new-event-form');
+  f.classList.toggle('open');
+  if (!f.classList.contains('open')) {
+    qrFileData = null;
+    editEventId = null; // reset edit mode on close
+    // Reset form title and button
+    document.querySelector('#new-event-form h3').textContent = 'Create New Event';
+    document.getElementById('ne-save-btn').textContent = 'Save as Draft';
+  }
+}
+
+function openEditEvent(eventId) {
+  const ev = allEvents.find(e => e['event_id'] === eventId);
+  if (!ev) return;
+  editEventId = eventId;
+
+  // Fill form fields
+  document.getElementById('ne-title').value      = ev['event_title']       || '';
+  document.getElementById('ne-date').value       = ev['event_date']        || '';
+  document.getElementById('ne-start-time').value = ev['start_time']        || '';
+  document.getElementById('ne-end-time').value   = ev['end_time']          || '';
+  document.getElementById('ne-venue').value      = ev['venue']             || '';
+  document.getElementById('ne-fee').value        = ev['fee_(₱)']           || '';
+  document.getElementById('ne-reg-type').value   = ev['registration_type'] || 'per_family';
+  document.getElementById('ne-payee').value      = ev['payee_name']        || '';
+  document.getElementById('ne-photo-folder').value = ev['photo_folder_url'] || '';
+  document.getElementById('ne-desc').value         = ev['description']      || '';
+  qrFileData = null; // don't re-upload existing QR unless a new one is chosen
+
+  // Switch form to edit mode
+  document.querySelector('#new-event-form h3').textContent = `Edit Event: ${ev['event_title'] || eventId}`;
+  document.getElementById('ne-save-btn').textContent = 'Update Event';
+
+  // Show form and scroll into view
+  const f = document.getElementById('new-event-form');
+  f.classList.add('open');
+  f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function saveNewEvent() {
+  const isEdit   = !!editEventId;
+  const title    = (document.getElementById('ne-title')?.value  || '').trim();
+  const date     = (document.getElementById('ne-date')?.value   || '').trim();
+  const venue    = (document.getElementById('ne-venue')?.value  || '').trim();
+  const feeRaw       = (document.getElementById('ne-fee')?.value          || '').trim();
+  const payee        = (document.getElementById('ne-payee')?.value        || '').trim();
+  const desc         = (document.getElementById('ne-desc')?.value         || '').trim();
+  const photoFolder  = (document.getElementById('ne-photo-folder')?.value || '').trim();
+
+  function showErr(msg) { alert('⚠️ ' + msg); }
+
+  if (!title)        return showErr('Event title is required.');
+  if (!date)         return showErr('Event date is required.');
+  if (!venue)        return showErr('Venue is required.');
+  if (feeRaw === '') return showErr('Registration fee is required. Enter 0 for free events.');
+
+  const saveBtn = document.getElementById('ne-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
+  try {
+    let resp;
+    if (isEdit) {
+      resp = await post({
+        _type: 'updateEvent', _token: coordToken,
+        eventId: editEventId,
+        title, date, venue,
+        startTime:        (document.getElementById('ne-start-time')?.value || ''),
+        endTime:          (document.getElementById('ne-end-time')?.value   || ''),
+        fee:              parseFloat(feeRaw) || 0,
+        registrationType: (document.getElementById('ne-reg-type')?.value  || 'per_family'),
+        payeeName:        payee,
+        description:      desc,
+        photoFolderUrl:   photoFolder,
+        qrCode:           qrFileData,
+      });
+    } else {
+      resp = await post({
+        _type: 'createEvent', _token: coordToken,
+        title, date, venue,
+        startTime:        (document.getElementById('ne-start-time')?.value || ''),
+        endTime:          (document.getElementById('ne-end-time')?.value   || ''),
+        fee:              parseFloat(feeRaw) || 0,
+        registrationType: (document.getElementById('ne-reg-type')?.value  || 'per_family'),
+        payeeName:        payee,
+        description:      desc,
+        photoFolderUrl:   photoFolder,
+        qrCode:           qrFileData,
+      });
+    }
+
+    if (resp.success) {
+      // Reset form
+      ['ne-title','ne-date','ne-start-time','ne-end-time','ne-venue','ne-fee','ne-photo-folder','ne-desc'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      const payeeEl = document.getElementById('ne-payee');
+      if (payeeEl) payeeEl.value = 'Debbie Uy Matiao';
+      const regTypeEl = document.getElementById('ne-reg-type');
+      if (regTypeEl) regTypeEl.value = 'per_family';
+      qrFileData = null;
+      editEventId = null;
+      document.getElementById('ne-qr-preview').classList.add('hidden');
+      document.getElementById('ne-qr-zone').innerHTML =
+        '<p class="text-sm font-medium" style="color:var(--ev)">📷 Click to upload QR code image</p>' +
+        '<p class="text-xs text-gray-400 mt-1">PNG or JPG</p>';
+      document.querySelector('#new-event-form h3').textContent = 'Create New Event';
+      document.getElementById('new-event-form').classList.remove('open');
+      await loadEvents();
+    } else {
+      showErr(resp.error || (isEdit ? 'Could not update event.' : 'Could not create event.'));
+    }
+  } catch(e) {
+    showErr('Network error: ' + e.message);
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = isEdit ? 'Update Event' : 'Save as Draft'; }
+  }
+}
+
+// ── COPY LINK ────────────────────────────────────────────────
+async function copyLink(url, eventId) {
+  try {
+    await navigator.clipboard.writeText(url);
+    const btn = document.getElementById('copy-btn-' + eventId);
+    if (btn) { btn.textContent = '✅ Copied!'; setTimeout(() => { btn.innerHTML = '🔗 Copy Link'; }, 2500); }
+  } catch(e) { prompt('Copy this registration link:', url); }
+}
+
+// ── REGISTRATIONS ─────────────────────────────────────────────
+function viewRegistrations(eventId) {
+  switchTab('registrations');
+  document.getElementById('reg-event-select').value = eventId;
+  loadRegistrations();
+}
+
+async function loadRegistrations() {
+  const eventId = document.getElementById('reg-event-select').value;
+  const loading = document.getElementById('regs-loading');
+  const empty   = document.getElementById('regs-empty');
+  const table   = document.getElementById('regs-table-wrap');
+  const emptyMsg= document.getElementById('regs-empty-msg');
+  const stats   = document.getElementById('reg-stats');
+
+  table.classList.add('hidden'); stats.classList.add('hidden');
+
+  if (!eventId) {
+    loading.classList.add('hidden');
+    empty.classList.remove('hidden');
+    emptyMsg.textContent = 'Select an event above to view registrations.';
+    return;
+  }
+
+  loading.classList.remove('hidden');
+  empty.classList.add('hidden');
+
+  try {
+    const resp = await api('getEventRegistrations', { eventId });
+    loading.classList.add('hidden');
+    allRegs = resp.data || [];
+    renderRegistrations();
+  } catch(e) {
+    loading.classList.add('hidden');
+    emptyMsg.textContent = 'Failed to load registrations.';
+    empty.classList.remove('hidden');
+  }
+}
+
+function filterRegistrations() { renderRegistrations(); }
+
+function renderRegistrations() {
+  const q       = (document.getElementById('reg-search').value || '').toLowerCase();
+  const empty   = document.getElementById('regs-empty');
+  const table   = document.getElementById('regs-table-wrap');
+  const stats   = document.getElementById('reg-stats');
+  const emptyMsg= document.getElementById('regs-empty-msg');
+
+  const filtered = allRegs.filter(r => {
+    const txt = [r['family_name'], r['parents_/_guardians'], r['role_at_event'], r['notes']].join(' ').toLowerCase();
+    return !q || txt.includes(q);
+  });
+
+  if (filtered.length === 0) {
+    table.classList.add('hidden'); stats.classList.add('hidden');
+    emptyMsg.textContent = allRegs.length === 0 ? 'No one has registered for this event yet.' : 'No matches found.';
+    empty.classList.remove('hidden'); return;
+  }
+
+  empty.classList.add('hidden');
+  table.classList.remove('hidden');
+  stats.classList.remove('hidden');
+
+  // Stats
+  document.getElementById('reg-count').textContent      = filtered.length;
+  document.getElementById('reg-organizers').textContent = filtered.filter(r=>r['role_at_event']==='organizer').length;
+  document.getElementById('reg-volunteers').textContent = filtered.filter(r=>r['role_at_event']==='volunteer').length;
+  document.getElementById('reg-attendees').textContent  = filtered.filter(r=>r['role_at_event']==='attendee'||!r['role_at_event']).length;
+
+  document.getElementById('regs-tbody').innerHTML = filtered.map(r => {
+    const role      = r['role_at_event'] || 'attendee';
+    const roleClass = role==='organizer'?'role-organizer':role==='volunteer'?'role-volunteer':'role-attendee';
+    const roleLabel = role==='organizer'?'Organizer':role==='volunteer'?'Volunteer':'Attendee';
+    const proof     = r['proof_of_payment_url'];
+    const proofBadge = proof && proof.startsWith('http')
+      ? `<a href="${proof}" target="_blank" class="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full hover:underline">✓ Uploaded</a>`
+      : `<span class="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">Pending</span>`;
+    const children  = r['children'] || '—';
+    const date      = r['timestamp'] ? new Date(r['timestamp']).toLocaleDateString('en-PH',{month:'short',day:'numeric'}) : '—';
+    const regId     = r['registration_id'] || '';
+    const paidStatus = r['payment_status'] || 'Unpaid';
+    const isPaid    = paidStatus === 'Paid';
+    const paidToggle = regId
+      ? `<button onclick="togglePayment('${regId}','${paidStatus}')"
+           class="text-xs font-semibold px-2 py-0.5 rounded-full border transition-colors cursor-pointer"
+           style="${isPaid
+             ? 'background:#d1fae5;color:#065f46;border-color:#6ee7b7'
+             : 'background:#f3f4f6;color:#6b7280;border-color:#e5e7eb'}"
+           title="Click to toggle payment status">
+           ${isPaid ? '✓ Paid' : '○ Unpaid'}
+         </button>`
+      : `<span class="text-xs text-gray-400">—</span>`;
+
+    return `<tr>
+      <td>
+        <p class="font-semibold text-gray-900">${r['family_name'] || '—'}</p>
+        <p class="text-xs text-gray-400">${regId}</p>
+      </td>
+      <td class="text-xs text-gray-600 leading-relaxed">${(r['parents_/_guardians']||'—').replace(/,\s*/g,'<br/>')}</td>
+      <td class="text-xs text-gray-600 hidden sm:table-cell leading-relaxed">${children}</td>
+      <td class="hidden md:table-cell"><span class="role-pill ${roleClass}">${roleLabel}</span></td>
+      <td class="text-xs text-gray-500 hidden lg:table-cell">${r['notes']||'—'}</td>
+      <td class="hidden md:table-cell">${proofBadge}</td>
+      <td class="hidden md:table-cell">${paidToggle}</td>
+      <td class="text-xs text-gray-400 hidden lg:table-cell">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PAYMENT STATUS TOGGLE ────────────────────────────────────
+async function togglePayment(regId, currentStatus) {
+  const newStatus = currentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+  try {
+    const resp = await post({ _type: 'markPaid', _token: coordToken, registrationId: regId, paymentStatus: newStatus });
+    if (resp.success) {
+      // Update local data so the re-render shows the new status
+      const reg = allRegs.find(r => r['registration_id'] === regId);
+      if (reg) reg['payment_status'] = newStatus;
+      renderRegistrations();
+    } else {
+      alert('Could not update payment status: ' + (resp.error || 'Unknown error'));
+    }
+  } catch(e) {
+    alert('Network error: ' + e.message);
+  }
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function api(action, extra = {}) {
+  const params = new URLSearchParams({ action, token: coordToken, ...extra });
+  const res = await fetch(APPS_SCRIPT_URL + '?' + params.toString());
+  return res.json();
+}
+
+async function post(payload) {
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload)
+  });
+  return res.json();
+}
+</script>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-12 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-3">Negros Oriental Homeschool Community · Est. 2023</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhomeschoolershub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr Homeschoolers Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

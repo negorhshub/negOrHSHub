@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resource Repository — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --o:    #ea580c;
+      --o-dk: #c2410c;
+      --o-lt: #fff7ed;
+      --o-pl: #fed7aa;
+    }
+    * { box-sizing: border-box; }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#fff7ed 0%,#fff 55%,#fdf5ef 100%); min-height:100vh; }
+
+    /* Tabs */
+    .tab-bar { display:flex; gap:.5rem; background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:.35rem; }
+    .tab-btn { flex:1; padding:.6rem .5rem; border:none; background:transparent; border-radius:.75rem; font-size:.8rem; font-weight:600; cursor:pointer; color:#6b7280; transition:all .15s; }
+    .tab-btn.active { background:var(--o); color:#fff; }
+    .tab-btn:not(.active):hover { background:#fff7ed; color:var(--o); }
+
+    /* Form inputs */
+    .inp { width:100%; padding:.6rem .875rem; border:1px solid #d1d5db; border-radius:.625rem; font-size:.875rem; outline:none; background:#fff; transition:border-color .15s,box-shadow .15s; }
+    .inp:focus { border-color:var(--o); box-shadow:0 0 0 3px rgba(234,88,12,.1); }
+    select.inp { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right .75rem center; background-size:1rem; padding-right:2.5rem; }
+    .label { display:block; font-size:.75rem; font-weight:600; color:#374151; margin-bottom:.25rem; }
+
+    /* Buttons */
+    .btn-o { display:inline-flex; align-items:center; gap:.35rem; padding:.65rem 1.25rem; background:var(--o); color:#fff; border-radius:.75rem; font-size:.875rem; font-weight:600; border:none; cursor:pointer; transition:background .15s; }
+    .btn-o:hover { background:var(--o-dk); }
+    .btn-o:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-outline { display:inline-flex; align-items:center; gap:.3rem; padding:.6rem 1rem; background:#fff; border:1px solid #e5e7eb; color:#4b5563; border-radius:.75rem; font-size:.875rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-outline:hover { background:#f9fafb; }
+
+    /* Resource cards */
+    .res-card { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1.25rem; transition:box-shadow .15s,transform .15s; }
+    .res-card:hover { box-shadow:0 4px 16px rgba(234,88,12,.1); transform:translateY(-1px); }
+    .badge { display:inline-block; padding:.15rem .5rem; border-radius:999px; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+    .badge-active   { background:#dcfce7; color:#15803d; }
+    .badge-inactive { background:#f3f4f6; color:#6b7280; }
+    .badge-good     { background:#dcfce7; color:#15803d; }
+    .badge-fair     { background:#fef3c7; color:#92400e; }
+    .badge-repair   { background:#fee2e2; color:#dc2626; }
+
+    /* Modal */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .modal-box { background:#fff; border-radius:1.25rem; width:100%; max-width:32rem; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2); }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:1px solid var(--o-pl)">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div class="flex-1">
+      <p class="font-bold leading-none" style="color:var(--o)">Resource Repository</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · Venues, Equipment & Activities</p>
+    </div>
+    <button id="coord-btn" onclick="toggleCoordSection()"
+            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
+      Coordinator ▾
+    </button>
+  </div>
+</header>
+
+<!-- ═══ COORDINATOR LOGIN ═══ -->
+<div id="coord-section" class="hidden border-b border-gray-100" style="background:#fffbf7">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div id="res-login" class="flex items-center gap-2 max-w-sm">
+      <input id="coord-token" type="password" placeholder="Coordinator token" class="inp flex-1"
+             onkeydown="if(event.key==='Enter') coordLogin()" />
+      <button onclick="coordLogin()" class="btn-o py-2.5 text-sm px-4">Login</button>
+    </div>
+    <p id="coord-err" class="hidden text-xs text-red-600 mt-1">Invalid token.</p>
+    <div id="coord-actions" class="hidden flex flex-wrap gap-2 items-center">
+      <button onclick="openAddModal('venue')"     class="btn-o text-sm">+ Add Venue</button>
+      <button onclick="openAddModal('equipment')" class="btn-o text-sm">+ Add Equipment</button>
+      <button onclick="openAddModal('activity')"  class="btn-o text-sm">+ Log Activity</button>
+      <button onclick="coordLogout()" class="text-xs text-red-500 hover:underline ml-auto">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="max-w-4xl mx-auto px-4 pt-7 pb-4 text-center">
+  <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--o-lt)">
+    <span class="text-2xl">🗃️</span>
+  </div>
+  <h1 class="text-2xl font-extrabold" style="color:var(--o)">Resource Repository</h1>
+  <p class="text-sm text-gray-500 mt-1 max-w-md mx-auto">Venues, equipment, and a running log of all our community activities — in one place.</p>
+</div>
+
+<!-- ═══ TABS ═══ -->
+<div class="max-w-4xl mx-auto px-4 mb-5">
+  <div class="tab-bar max-w-md mx-auto">
+    <button class="tab-btn active" id="tab-venues"    onclick="switchTab('venues')">🏛️ Venues</button>
+    <button class="tab-btn"        id="tab-equipment" onclick="switchTab('equipment')">🔧 Equipment</button>
+    <button class="tab-btn"        id="tab-activities" onclick="switchTab('activities')">📋 Activity Log</button>
+  </div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div class="max-w-4xl mx-auto px-4 pb-16">
+
+  <!-- Venues Panel -->
+  <div id="panel-venues">
+    <div id="venues-loading" class="text-center py-12 text-gray-400">
+      <div class="text-3xl mb-2 animate-pulse">🏛️</div><p class="text-sm">Loading venues…</p>
+    </div>
+    <div id="venues-empty" class="hidden text-center py-12 text-gray-400">
+      <div class="text-3xl mb-2">📭</div>
+      <p class="font-medium text-gray-600">No venues logged yet</p>
+      <p class="text-sm mt-1">Coordinators can add venues using the button above.</p>
+    </div>
+    <div id="venues-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  </div>
+
+  <!-- Equipment Panel -->
+  <div id="panel-equipment" class="hidden">
+    <div id="equipment-loading" class="text-center py-12 text-gray-400">
+      <div class="text-3xl mb-2 animate-pulse">🔧</div><p class="text-sm">Loading equipment…</p>
+    </div>
+    <div id="equipment-empty" class="hidden text-center py-12 text-gray-400">
+      <div class="text-3xl mb-2">📭</div>
+      <p class="font-medium text-gray-600">No equipment logged yet</p>
+      <p class="text-sm mt-1">Coordinators can add equipment using the button above.</p>
+    </div>
+    <div id="equipment-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  </div>
+
+  <!-- Activity Log Panel -->
+  <div id="panel-activities" class="hidden">
+    <div id="activities-loading" class="text-center py-12 text-gray-400">
+      <div class="text-3xl mb-2 animate-pulse">📋</div><p class="text-sm">Loading activity log…</p>
+    </div>
+    <div id="activities-empty" class="hidden text-center py-12 text-gray-400">
+      <div class="text-3xl mb-2">📭</div>
+      <p class="font-medium text-gray-600">No activities logged yet</p>
+      <p class="text-sm mt-1">Coordinators can log activities using the button above.</p>
+    </div>
+    <div id="activities-list" class="hidden space-y-3"></div>
+  </div>
+
+</div>
+
+<!-- ═══ ADD MODAL ═══ -->
+<div id="add-modal" class="modal-backdrop hidden" onclick="if(event.target===this) closeModal()">
+  <div class="modal-box">
+    <div class="px-6 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 id="modal-title" class="font-bold text-gray-900"></h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    </div>
+    <div id="modal-body" class="px-6 py-5 space-y-4"></div>
+    <div class="px-6 pb-5 flex gap-3">
+      <button id="modal-save-btn" onclick="saveResource()" class="btn-o flex-1">Save</button>
+      <button onclick="closeModal()" class="btn-outline flex-1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-4 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs text-gray-300">💛 Created by Fibee</p>
+  </div>
+</footer>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+var coordToken  = '';
+var currentTab  = 'venues';
+var currentType = '';
+
+/* ─── AUTH ─────────────────────────────────────────────────── */
+function toggleCoordSection() {
+  document.getElementById('coord-section').classList.toggle('hidden');
+}
+
+async function coordLogin() {
+  var t = document.getElementById('coord-token').value.trim();
+  if (!t) return;
+  document.getElementById('coord-err').classList.add('hidden');
+  try {
+    var res  = await fetch(APPS_SCRIPT_URL + '?action=getEvents&token=' + encodeURIComponent(t));
+    var data = await res.json();
+    if (data.error === 'Unauthorized') { document.getElementById('coord-err').classList.remove('hidden'); return; }
+    coordToken = t;
+    localStorage.setItem('nhh_coord_token', t);
+    document.getElementById('res-login').classList.add('hidden');
+    document.getElementById('coord-actions').classList.remove('hidden');
+    document.getElementById('coord-btn').textContent = 'Coordinator ✓';
+  } catch(e) {
+    document.getElementById('coord-err').textContent = 'Connection error.';
+    document.getElementById('coord-err').classList.remove('hidden');
+  }
+}
+
+function coordLogout() {
+  coordToken = '';
+  localStorage.removeItem('nhh_coord_token');
+  document.getElementById('res-login').classList.remove('hidden');
+  document.getElementById('coord-actions').classList.add('hidden');
+  document.getElementById('coord-token').value = '';
+  document.getElementById('coord-btn').textContent = 'Coordinator ▾';
+}
+
+/* ─── TABS ──────────────────────────────────────────────────── */
+function switchTab(tab) {
+  currentTab = tab;
+  ['venues','equipment','activities'].forEach(function(t) {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
+  });
+}
+
+/* ─── LOAD DATA ─────────────────────────────────────────────── */
+async function loadAll() {
+  await Promise.all([loadVenues(), loadEquipment(), loadActivities()]);
+}
+
+async function loadVenues() {
+  try {
+    var res  = await fetch(APPS_SCRIPT_URL + '?action=getVenues');
+    var data = await res.json();
+    var items = (data.success && data.data) ? data.data : [];
+    document.getElementById('venues-loading').classList.add('hidden');
+    if (items.length === 0) { document.getElementById('venues-empty').classList.remove('hidden'); return; }
+    document.getElementById('venues-grid').classList.remove('hidden');
+    document.getElementById('venues-grid').innerHTML = items.map(function(v) {
+      var cond = v['status'] || 'Active';
+      return '<div class="res-card">' +
+        '<div class="flex items-start justify-between gap-2 mb-2">' +
+          '<div>' +
+            '<p class="font-bold text-gray-900 text-sm">' + escHtml(v['name'] || 'Unnamed Venue') + '</p>' +
+            '<p class="text-xs text-gray-500 mt-0.5">' + escHtml(v['type'] || '') + (v['capacity'] ? ' · Up to ' + escHtml(v['capacity']) + ' pax' : '') + '</p>' +
+          '</div>' +
+          '<span class="badge ' + (cond === 'Active' ? 'badge-active' : 'badge-inactive') + '">' + escHtml(cond) + '</span>' +
+        '</div>' +
+        (v['address'] ? '<p class="text-xs text-gray-600 mb-2">📍 ' + escHtml(v['address']) + '</p>' : '') +
+        (v['contact_person'] ? '<p class="text-xs text-gray-500">👤 ' + escHtml(v['contact_person']) + (v['contact_number'] ? ' · ' + escHtml(v['contact_number']) : '') + '</p>' : '') +
+        (v['notes'] ? '<p class="text-xs text-gray-400 mt-2 italic">' + escHtml(v['notes']) + '</p>' : '') +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    document.getElementById('venues-loading').classList.add('hidden');
+    document.getElementById('venues-empty').classList.remove('hidden');
+  }
+}
+
+async function loadEquipment() {
+  try {
+    var res  = await fetch(APPS_SCRIPT_URL + '?action=getEquipment');
+    var data = await res.json();
+    var items = (data.success && data.data) ? data.data : [];
+    document.getElementById('equipment-loading').classList.add('hidden');
+    if (items.length === 0) { document.getElementById('equipment-empty').classList.remove('hidden'); return; }
+    document.getElementById('equipment-grid').classList.remove('hidden');
+    document.getElementById('equipment-grid').innerHTML = items.map(function(eq) {
+      var cond = (eq['condition'] || 'Good').toLowerCase();
+      var badgeCls = cond === 'good' ? 'badge-good' : cond === 'fair' ? 'badge-fair' : 'badge-repair';
+      return '<div class="res-card">' +
+        '<div class="flex items-start justify-between gap-2 mb-2">' +
+          '<div>' +
+            '<p class="font-bold text-gray-900 text-sm">' + escHtml(eq['item_name'] || 'Item') + '</p>' +
+            '<p class="text-xs text-gray-500 mt-0.5">' + escHtml(eq['category'] || '') + (eq['quantity'] ? ' · Qty: ' + escHtml(eq['quantity']) : '') + '</p>' +
+          '</div>' +
+          '<span class="badge ' + badgeCls + '">' + escHtml(eq['condition'] || 'Good') + '</span>' +
+        '</div>' +
+        (eq['custodian'] ? '<p class="text-xs text-gray-600">👤 ' + escHtml(eq['custodian']) + (eq['contact'] ? ' · ' + escHtml(eq['contact']) : '') + '</p>' : '') +
+        (eq['notes'] ? '<p class="text-xs text-gray-400 mt-2 italic">' + escHtml(eq['notes']) + '</p>' : '') +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    document.getElementById('equipment-loading').classList.add('hidden');
+    document.getElementById('equipment-empty').classList.remove('hidden');
+  }
+}
+
+async function loadActivities() {
+  try {
+    var res  = await fetch(APPS_SCRIPT_URL + '?action=getActivityLog');
+    var data = await res.json();
+    var items = (data.success && data.data) ? data.data : [];
+    document.getElementById('activities-loading').classList.add('hidden');
+    if (items.length === 0) { document.getElementById('activities-empty').classList.remove('hidden'); return; }
+    document.getElementById('activities-list').classList.remove('hidden');
+    document.getElementById('activities-list').innerHTML = items.map(function(a) {
+      return '<div class="res-card flex gap-4 items-start">' +
+        '<div class="flex-shrink-0 text-center">' +
+          '<p class="text-xs font-bold text-orange-600 w-14">' + escHtml(fmtDateShort(a['date_done']) || '—') + '</p>' +
+        '</div>' +
+        '<div class="flex-1 min-w-0">' +
+          '<p class="font-semibold text-gray-900 text-sm">' + escHtml(a['activity_name'] || 'Activity') + '</p>' +
+          '<p class="text-xs text-gray-500 mt-0.5">' +
+            (a['category'] ? escHtml(a['category']) : '') +
+            (a['venue_used'] ? ' · 📍 ' + escHtml(a['venue_used']) : '') +
+            (a['attendance'] ? ' · 👥 ' + escHtml(a['attendance']) + ' attended' : '') +
+          '</p>' +
+          (a['notes'] ? '<p class="text-xs text-gray-500 mt-1">' + escHtml(a['notes']) + '</p>' : '') +
+          (a['logged_by'] ? '<p class="text-xs text-gray-400 mt-1">Logged by ' + escHtml(a['logged_by']) + '</p>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    document.getElementById('activities-loading').classList.add('hidden');
+    document.getElementById('activities-empty').classList.remove('hidden');
+  }
+}
+
+/* ─── ADD MODAL ─────────────────────────────────────────────── */
+var FORMS = {
+  venue: {
+    title: '🏛️ Add Venue',
+    fields: [
+      { id:'vn-name',    label:'Venue Name *', type:'text',   placeholder:'e.g., Kawayan Casitas, Dauin' },
+      { id:'vn-address', label:'Address / Location', type:'text', placeholder:'Full address or landmark' },
+      { id:'vn-type',    label:'Type', type:'select', options:['Indoor','Outdoor','Both'] },
+      { id:'vn-cap',     label:'Capacity (pax)', type:'number', placeholder:'e.g., 60' },
+      { id:'vn-contact', label:'Contact Person', type:'text', placeholder:'Name' },
+      { id:'vn-phone',   label:'Contact Number', type:'tel',  placeholder:'+63...' },
+      { id:'vn-notes',   label:'Notes', type:'textarea', placeholder:'Parking, A/V, kitchen access…' },
+    ],
+    save: function() {
+      var name = document.getElementById('vn-name').value.trim();
+      if (!name) { alert('Venue name is required.'); return; }
+      return { _type:'addVenue', _token:coordToken,
+        name:          name,
+        address:       document.getElementById('vn-address').value.trim(),
+        type:          document.getElementById('vn-type').value,
+        capacity:      document.getElementById('vn-cap').value.trim(),
+        contactPerson: document.getElementById('vn-contact').value.trim(),
+        contactNumber: document.getElementById('vn-phone').value.trim(),
+        notes:         document.getElementById('vn-notes').value.trim(),
+      };
+    },
+    reload: loadVenues,
+    resetTo: 'venues',
+  },
+  equipment: {
+    title: '🔧 Add Equipment',
+    fields: [
+      { id:'eq-name',      label:'Item Name *', type:'text', placeholder:'e.g., Projector, Folding Tables' },
+      { id:'eq-category',  label:'Category', type:'select', options:['Furniture','AV Equipment','Supplies','Kitchen','Arts & Crafts','Sports','Other'] },
+      { id:'eq-qty',       label:'Quantity', type:'number', placeholder:'1' },
+      { id:'eq-condition', label:'Condition', type:'select', options:['Good','Fair','Needs Repair'] },
+      { id:'eq-custodian', label:'Custodian (who has it)', type:'text', placeholder:'Name' },
+      { id:'eq-contact',   label:'Custodian Contact', type:'tel', placeholder:'+63...' },
+      { id:'eq-notes',     label:'Notes', type:'textarea', placeholder:'Any details about the item…' },
+    ],
+    save: function() {
+      var name = document.getElementById('eq-name').value.trim();
+      if (!name) { alert('Item name is required.'); return; }
+      return { _type:'addEquipment', _token:coordToken,
+        itemName:   name,
+        category:   document.getElementById('eq-category').value,
+        quantity:   document.getElementById('eq-qty').value || 1,
+        condition:  document.getElementById('eq-condition').value,
+        custodian:  document.getElementById('eq-custodian').value.trim(),
+        contact:    document.getElementById('eq-contact').value.trim(),
+        notes:      document.getElementById('eq-notes').value.trim(),
+      };
+    },
+    reload: loadEquipment,
+    resetTo: 'equipment',
+  },
+  activity: {
+    title: '📋 Log an Activity',
+    fields: [
+      { id:'ac-name',     label:'Activity Name *', type:'text', placeholder:'e.g., General Assembly — May 2026' },
+      { id:'ac-category', label:'Category', type:'select', options:['Workshop','Social Gathering','Outdoor Activity','Learning Session','Service Project','Celebration','Other'] },
+      { id:'ac-date',     label:'Date Done', type:'date', placeholder:'' },
+      { id:'ac-venue',    label:'Venue Used', type:'text', placeholder:'Where did it happen?' },
+      { id:'ac-attend',   label:'Approximate Attendance', type:'number', placeholder:'e.g., 45' },
+      { id:'ac-notes',    label:'Notes / Highlights', type:'textarea', placeholder:'Brief summary of what happened, what worked well…' },
+      { id:'ac-by',       label:'Logged By', type:'text', placeholder:'Your name' },
+    ],
+    save: function() {
+      var name = document.getElementById('ac-name').value.trim();
+      if (!name) { alert('Activity name is required.'); return; }
+      return { _type:'addActivity', _token:coordToken,
+        activityName: name,
+        category:     document.getElementById('ac-category').value,
+        dateDone:     document.getElementById('ac-date').value,
+        venueUsed:    document.getElementById('ac-venue').value.trim(),
+        attendance:   document.getElementById('ac-attend').value.trim(),
+        notes:        document.getElementById('ac-notes').value.trim(),
+        loggedBy:     document.getElementById('ac-by').value.trim(),
+      };
+    },
+    reload: loadActivities,
+    resetTo: 'activities',
+  },
+};
+
+function openAddModal(type) {
+  if (!coordToken) { alert('Please log in as coordinator first.'); return; }
+  currentType = type;
+  var f = FORMS[type];
+  document.getElementById('modal-title').textContent = f.title;
+  document.getElementById('modal-body').innerHTML = f.fields.map(function(field) {
+    var input = '';
+    if (field.type === 'select') {
+      input = '<select id="' + field.id + '" class="inp">' +
+        field.options.map(function(o) { return '<option value="' + o + '">' + o + '</option>'; }).join('') +
+        '</select>';
+    } else if (field.type === 'textarea') {
+      input = '<textarea id="' + field.id + '" rows="3" class="inp resize-none" placeholder="' + field.placeholder + '"></textarea>';
+    } else {
+      input = '<input id="' + field.id + '" type="' + field.type + '" class="inp" placeholder="' + (field.placeholder||'') + '" />';
+    }
+    return '<div><label class="label">' + field.label + '</label>' + input + '</div>';
+  }).join('');
+  document.getElementById('add-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('add-modal').classList.add('hidden');
+  currentType = '';
+}
+
+async function saveResource() {
+  if (!currentType) return;
+  var f    = FORMS[currentType];
+  var body = f.save();
+  if (!body) return;
+
+  var btn = document.getElementById('modal-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    var res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(body),
+    });
+    var data = await res.json();
+    if (data.success) {
+      closeModal();
+      switchTab(f.resetTo);
+      // Reset and reload
+      document.getElementById('venues-grid').classList.add('hidden');
+      document.getElementById('venues-empty').classList.add('hidden');
+      document.getElementById('venues-loading').classList.remove('hidden');
+      document.getElementById('equipment-grid').classList.add('hidden');
+      document.getElementById('equipment-empty').classList.add('hidden');
+      document.getElementById('equipment-loading').classList.remove('hidden');
+      document.getElementById('activities-list').classList.add('hidden');
+      document.getElementById('activities-empty').classList.add('hidden');
+      document.getElementById('activities-loading').classList.remove('hidden');
+      await f.reload();
+      // Hide all loading spinners for the other panels
+      document.getElementById('venues-loading').classList.add('hidden');
+      document.getElementById('equipment-loading').classList.add('hidden');
+      document.getElementById('activities-loading').classList.add('hidden');
+    } else {
+      alert('Error: ' + (data.error || 'Could not save.'));
+    }
+  } catch(e) { alert('Network error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Save'; }
+}
+
+/* ─── HELPERS ────────────────────────────────────────────────── */
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDateShort(d) {
+  if (!d) return '';
+  try {
+    var p = d.split('-');
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]) + ', ' + p[0];
+  } catch(e) { return d; }
+}
+
+/* ─── INIT ───────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function() {
+  loadAll();
+  var saved = localStorage.getItem('nhh_coord_token');
+  if (saved) {
+    document.getElementById('coord-token').value = saved;
+    coordLogin();
+  }
+});
+</script>
+
+</body>
+</html>

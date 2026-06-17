@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NegOr HS Hub — Community Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(150deg, #FEF3EE 0%, #fff 55%, #fdf5ef 100%);
+      min-height: 100vh;
+    }
+
+    /* ─── Announcement banner ─── */
+    #ann-bar {
+      background: linear-gradient(90deg, #431407 0%, #7c2d12 50%, #9a3412 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    #ann-bar::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='18' fill='none' stroke='rgba(255,255,255,.04)' stroke-width='1'/%3E%3C/svg%3E") repeat;
+      pointer-events: none;
+    }
+    .ann-fade { animation: annFade .35s ease; }
+    @keyframes annFade { from { opacity:0; transform:translateX(8px); } to { opacity:1; transform:translateX(0); } }
+    .ann-dot { width:.45rem; height:.45rem; border-radius:50%; background:rgba(255,255,255,.35); cursor:pointer; transition:background .15s; }
+    .ann-dot.active { background:#fff; }
+
+    /* ─── Hero banner ─── */
+    .hero-band {
+      background: linear-gradient(135deg, var(--t-dk) 0%, var(--t) 60%, var(--t-md) 100%);
+      color: #fff; padding: 2rem 1.5rem 3.5rem;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .hero-band::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='rgba(255,255,255,.06)' stroke-width='1'/%3E%3C/svg%3E") repeat;
+    }
+    .hero-scoop {
+      position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2.5rem; background: #fff;
+      clip-path: ellipse(55% 100% at 50% 100%);
+    }
+
+    /* ─── Section label ─── */
+    .section-label {
+      font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.1em;
+      color: var(--t); margin-bottom:1rem; text-align:center;
+      display:flex; align-items:center; gap:.75rem;
+    }
+    .section-label::before, .section-label::after {
+      content:''; flex:1; height:1px; background: var(--t-pal);
+    }
+
+    /* ─── Module card ─── */
+    .module-card {
+      display: flex; flex-direction: column;
+      background: white; border-radius: 1.25rem;
+      border: 1px solid #f3f4f6;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+      overflow: hidden; transition: transform .18s, box-shadow .18s, border-color .18s;
+    }
+    .module-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 24px rgba(181,69,27,.13);
+      border-color: var(--t-pal);
+    }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: .875rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    /* ─── Badges ─── */
+    .badge-live  { display:inline-flex; align-items:center; gap:.25rem; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:.2rem .55rem; border-radius:999px; background:var(--t-lt); color:var(--t); }
+    .badge-coord { display:inline-flex; align-items:center; gap:.25rem; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:.2rem .55rem; border-radius:999px; background:#f3f4f6; color:#6b7280; }
+    .badge-admin { display:inline-flex; align-items:center; gap:.25rem; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:.2rem .55rem; border-radius:999px; background:#fef2f2; color:#b91c1c; }
+
+    /* ─── Go button ─── */
+    .btn-go {
+      display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
+      width:100%; padding:.65rem 1rem;
+      border-radius:.75rem; font-size:.875rem; font-weight:600;
+      background: var(--t); color:#fff; border:none; cursor:pointer;
+      transition:background .15s; text-decoration:none;
+    }
+    .btn-go:hover { background: var(--t-dk); }
+
+    /* ─── Social link ─── */
+    .social-link { display:flex; align-items:center; gap:.4rem; font-size:.75rem; color:#6b7280; text-decoration:none; transition:color .15s; }
+    .social-link:hover { color:var(--t); }
+  </style>
+</head>
+<body>
+
+<!-- ═══ ANNOUNCEMENT BANNER ═══ -->
+<div id="ann-bar" class="relative">
+  <div class="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-3 relative z-10">
+
+    <!-- Icon -->
+    <span id="ann-icon" class="text-lg flex-shrink-0 w-7 text-center"></span>
+
+    <!-- Text -->
+    <div class="flex-1 min-w-0">
+      <p id="ann-main" class="text-sm font-semibold leading-tight truncate"></p>
+      <p id="ann-sub"  class="text-xs opacity-70 truncate"></p>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <button onclick="annStep(-1)"
+              class="w-6 h-6 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition text-base leading-none">‹</button>
+      <div id="ann-dots" class="flex gap-1"></div>
+      <button onclick="annStep(1)"
+              class="w-6 h-6 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition text-base leading-none">›</button>
+      <button onclick="document.getElementById('ann-bar').style.display='none'"
+              class="ml-1 text-white/40 hover:text-white/80 transition text-xs leading-none">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero-band relative">
+  <div class="relative z-10 max-w-lg mx-auto">
+    <!-- Light backdrop makes transparent logo pop against the dark gradient -->
+    <div class="inline-block rounded-3xl px-6 py-4 mb-1"
+         style="background:rgba(254,243,238,0.22); backdrop-filter:blur(4px);">
+      <img src="logo.png" alt="NegOr Homeschoolers Hub"
+           class="h-32 object-contain"
+           onerror="this.style.display='none'; document.getElementById('hero-fallback').style.display='block'" />
+    </div>
+    <div id="hero-fallback" style="display:none">
+      <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-white/20">
+        <span class="text-4xl">🏠</span>
+      </div>
+      <h1 class="text-3xl font-extrabold mb-1">NegOr HS Hub</h1>
+    </div>
+    <p class="text-sm" style="color:rgba(255,255,255,.75)">Negros Oriental Homeschool Community Portal</p>
+  </div>
+  <div class="hero-scoop"></div>
+</div>
+
+<!-- ═══ MODULES GRID ═══ -->
+<div class="max-w-4xl mx-auto px-4 pt-8 pb-16">
+
+  <!-- Community section -->
+  <div class="section-label">For Everyone</div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+
+    <!-- 1. Family Registration -->
+    <div class="module-card">
+      <div class="h-1" style="background:var(--t)"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:var(--t-lt)">🏠</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Family Registration</h3>
+        <p class="text-sm text-gray-500 leading-snug">Join the NegOr HS Hub community. Register your family, share your skills, and let us know your interests.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="register.html" class="btn-go">Open Form <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 2. Event Registration -->
+    <div class="module-card">
+      <div class="h-1" style="background:#d97706"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fef3c7">📅</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Event Registration</h3>
+        <p class="text-sm text-gray-500 leading-snug">Sign up for quarterly huddles and special events. Confirm who's coming and complete your registration.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="event-registration.html" class="btn-go" style="background:#d97706">Sign Up for Event <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 3. Recap Corner -->
+    <div class="module-card">
+      <div class="h-1" style="background:#7c3aed"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#f5f3ff">📸</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Recap Corner</h3>
+        <p class="text-sm text-gray-500 leading-snug">Relive our community moments. Read highlights and browse photos from past activities and huddles.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="recap.html" class="btn-go" style="background:#7c3aed">View Recaps <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 4. Book Exchange Repository -->
+    <div class="module-card">
+      <div class="h-1" style="background:#16a34a"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#f0fdf4">📚</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Book Exchange Repository</h3>
+        <p class="text-sm text-gray-500 leading-snug">Share books you've outgrown and borrow from fellow homeschool families. A community lending library.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="books.html" class="btn-go" style="background:#16a34a">Browse Books <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 5. Photo Archive -->
+    <div class="module-card">
+      <div class="h-1" style="background:#0f766e"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#f0fdfa">🖼️</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Photo Archive</h3>
+        <p class="text-sm text-gray-500 leading-snug">Find the Google Drive folder for each event and upload your photos. Everyone is welcome to contribute!</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="photos.html" class="btn-go" style="background:#0f766e">Open Archive <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 6. Resource Repository -->
+    <div class="module-card">
+      <div class="h-1" style="background:#ea580c"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fff7ed">🗃️</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Resource Repository</h3>
+        <p class="text-sm text-gray-500 leading-snug">Venues, equipment inventory, and a running log of all our community activities — organized in one place.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="resources.html" class="btn-go" style="background:#ea580c">Browse Resources <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Coordinator / Admin section -->
+  <div class="section-label">For Coordinators</div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+    <!-- 7. Organizer Checklist -->
+    <div class="module-card">
+      <div class="h-1" style="background:#2563eb"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#eff6ff">✅</div>
+          <span class="badge-coord">Coordinators</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Organizer Checklist</h3>
+        <p class="text-sm text-gray-500 leading-snug">Role-based checklists for Term Coordinators and Huddle Volunteers — plus an integrated workflow guide.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="checklist.html" class="btn-go" style="background:#2563eb">Open Checklist <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 8. Event Setup -->
+    <div class="module-card">
+      <div class="h-1" style="background:#d97706"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fef3c7">⚙️</div>
+          <span class="badge-coord">Coordinators</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Event Setup</h3>
+        <p class="text-sm text-gray-500 leading-snug">Create and manage events, activate registration, set photo folder links, and view the attendees list.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="event-setup.html" class="btn-go" style="background:#d97706">Open Panel <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
+    <!-- 9. Admin Dashboard -->
+    <div class="module-card">
+      <div class="h-1" style="background:#374151"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fef2f2">🔐</div>
+          <span class="badge-admin">Admin Only</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Admin Dashboard</h3>
+        <p class="text-sm text-gray-500 leading-snug">View all family registrations, manage member records, and access community-wide data and stats.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="admin.html" class="btn-go" style="background:#374151">Admin Login <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="py-10 border-t" style="border-color:var(--t-pal); background:var(--t-lt)">
+  <div class="max-w-4xl mx-auto px-4 text-center">
+    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-12 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-500 mb-1">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs mb-4" style="color:var(--t-md)">💛 Portal created by Fibee</p>
+    <div class="flex items-center justify-center gap-6">
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener" class="social-link">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr HS Hub Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener" class="social-link">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+
+/* ─── VERSE OF THE DAY — local rotation ────────────────────── */
+const VERSES = [
+  { ref:'Proverbs 22:6',      text:'Train up a child in the way he should go; even when he is old he will not depart from it.' },
+  { ref:'Deuteronomy 6:6-7',  text:'These words shall be on your heart. Teach them diligently to your children.' },
+  { ref:'3 John 1:4',         text:'I have no greater joy than to hear that my children are walking in the truth.' },
+  { ref:'Philippians 4:13',   text:'I can do all things through Christ who strengthens me.' },
+  { ref:'Jeremiah 29:11',     text:'"For I know the plans I have for you," says the Lord, "plans to give you hope and a future."' },
+  { ref:'Joshua 1:9',         text:'Be strong and courageous. Do not be afraid; the Lord your God is with you wherever you go.' },
+  { ref:'Proverbs 3:5-6',     text:'Trust in the Lord with all your heart, and lean not on your own understanding.' },
+  { ref:'Psalm 127:3',        text:'Children are a gift from the Lord; they are a reward from Him.' },
+  { ref:'Isaiah 40:31',       text:'Those who hope in the Lord will renew their strength. They will soar on wings like eagles.' },
+  { ref:'Colossians 3:23',    text:'Whatever you do, work at it with all your heart, as working for the Lord.' },
+  { ref:'Romans 8:28',        text:'In all things God works for the good of those who love Him.' },
+  { ref:'Matthew 6:33',       text:'Seek first His kingdom and His righteousness, and all these things will be given to you.' },
+  { ref:'Lamentations 3:22-23', text:'His mercies are new every morning; great is your faithfulness.' },
+  { ref:'Isaiah 41:10',       text:'Do not fear, for I am with you; I am your God. I will strengthen you and help you.' },
+  { ref:'1 Corinthians 13:4', text:'Love is patient, love is kind. It does not envy, it is not proud.' },
+  { ref:'Psalm 46:1',         text:'God is our refuge and strength, an ever-present help in trouble.' },
+  { ref:'Micah 6:8',          text:'Act justly, love mercy, and walk humbly with your God.' },
+  { ref:'Galatians 6:9',      text:'Let us not grow weary in doing good, for at the proper time we will reap a harvest.' },
+  { ref:'Matthew 11:28',      text:'Come to me, all who are weary and burdened, and I will give you rest.' },
+  { ref:'Psalm 119:105',      text:'Your word is a lamp for my feet, a light on my path.' },
+  { ref:'2 Timothy 3:16',     text:'All Scripture is God-breathed and useful for teaching, correcting, and training in righteousness.' },
+  { ref:'James 1:5',          text:'If any of you lacks wisdom, you should ask God, who gives generously to all.' },
+  { ref:'1 Peter 5:7',        text:'Cast all your anxiety on Him because He cares for you.' },
+  { ref:'Ephesians 6:4',      text:'Fathers, bring your children up in the training and instruction of the Lord.' },
+  { ref:'Proverbs 17:6',      text:'Grandchildren are the crown of old men, and the glory of sons is their fathers.' },
+  { ref:'Psalm 37:4',         text:'Delight yourself in the Lord, and He will give you the desires of your heart.' },
+  { ref:'Romans 12:2',        text:'Do not conform to the pattern of this world, but be transformed by the renewing of your mind.' },
+  { ref:'Hebrews 11:1',       text:'Faith is confidence in what we hope for and assurance about what we do not see.' },
+  { ref:'Psalm 23:1',         text:'The Lord is my shepherd; I shall not want.' },
+  { ref:'Proverbs 31:25',     text:'She is clothed with strength and dignity; she can laugh at the days to come.' },
+  { ref:'Psalm 28:7',         text:'The Lord is my strength and my shield; my heart trusts in Him, and He helps me.' },
+  { ref:'John 14:6',          text:'I am the way, the truth, and the life. No one comes to the Father except through Me.' },
+];
+
+function getDailyVerse() {
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 0);
+  var dayOfYear = Math.floor((now - start) / 86400000);
+  return VERSES[dayOfYear % VERSES.length];
+}
+
+/* ─── ANNOUNCEMENT ENGINE ──────────────────────────────────── */
+var annItems = [];
+var annIdx   = 0;
+var annTimer = null;
+
+function buildAnnouncements(events, birthdays) {
+  var items = [];
+  var now   = new Date();
+
+  // ── Upcoming events this quarter ──
+  var qStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+  var qEnd   = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0);
+
+  (events || []).forEach(function(ev) {
+    if (!ev['event_date']) return;
+    var d = new Date(ev['event_date']);
+    if (isNaN(d.getTime())) return;
+    if (d < now || d > qEnd) return;          // skip past & out-of-quarter
+    items.push({
+      icon: '📅',
+      main: ev['event_title'] || 'Upcoming Event',
+      sub:  fmtDate(ev['event_date']) + (ev['venue'] ? '  ·  ' + ev['venue'] : ''),
+      link: 'event-registration.html',
+    });
+  });
+
+  // Sort events by date ascending
+  items.sort(function(a, b) { return (a.sub || '').localeCompare(b.sub || ''); });
+
+  // ── Birthdays this month ──
+  (birthdays || []).forEach(function(b) {
+    var ordinal = b.day + (b.day === 1 || b.day === 21 || b.day === 31 ? 'st' :
+                            b.day === 2 || b.day === 22 ? 'nd' :
+                            b.day === 3 || b.day === 23 ? 'rd' : 'th');
+    var sub = getMonthName(now.getMonth()) + ' ' + ordinal;
+    if (b.type === 'child' && b.age) sub = 'Turning ' + b.age + ' · ' + sub;
+    items.push({
+      icon: '🎂',
+      main: 'Happy birthday, ' + b.name + '! 🎉',
+      sub:  sub,
+      link: null,
+    });
+  });
+
+  // ── Fallback: verse of the day ──
+  if (items.length === 0) {
+    var v = getDailyVerse();
+    items.push({
+      icon: '✝️',
+      main: v.text,
+      sub:  '— ' + v.ref,
+      link: null,
+    });
+  }
+
+  return items;
+}
+
+function renderAnn() {
+  if (annItems.length === 0) return;
+  var item = annItems[annIdx];
+
+  var icon = document.getElementById('ann-icon');
+  var main = document.getElementById('ann-main');
+  var sub  = document.getElementById('ann-sub');
+
+  icon.textContent = item.icon;
+  main.textContent = item.main;
+  sub.textContent  = item.sub  || '';
+
+  // Make clickable if link
+  var bar = document.getElementById('ann-bar');
+  if (item.link) {
+    bar.style.cursor = 'pointer';
+    bar.onclick = function(e) {
+      if (e.target.tagName === 'BUTTON') return;
+      window.location.href = item.link;
+    };
+  } else {
+    bar.style.cursor = 'default';
+    bar.onclick = null;
+  }
+
+  // Animate
+  main.classList.remove('ann-fade');
+  sub.classList.remove('ann-fade');
+  void main.offsetWidth; // reflow
+  main.classList.add('ann-fade');
+  sub.classList.add('ann-fade');
+
+  // Dots
+  var dotsEl = document.getElementById('ann-dots');
+  dotsEl.innerHTML = '';
+  if (annItems.length > 1 && annItems.length <= 10) {
+    annItems.forEach(function(_, i) {
+      var d = document.createElement('div');
+      d.className = 'ann-dot' + (i === annIdx ? ' active' : '');
+      d.onclick = function() { annGoTo(i); };
+      dotsEl.appendChild(d);
+    });
+  } else if (annItems.length > 10) {
+    dotsEl.innerHTML = '<span class="text-white/60 text-xs">' + (annIdx + 1) + ' / ' + annItems.length + '</span>';
+  }
+}
+
+function annGoTo(idx) {
+  annIdx = (idx + annItems.length) % annItems.length;
+  renderAnn();
+  resetTimer();
+}
+function annStep(dir) { annGoTo(annIdx + dir); }
+
+function resetTimer() {
+  if (annTimer) clearInterval(annTimer);
+  if (annItems.length > 1) {
+    annTimer = setInterval(function() { annGoTo(annIdx + 1); }, 5000);
+  }
+}
+
+async function initAnnouncements() {
+  try {
+    var [evRes, bdRes] = await Promise.all([
+      fetch(APPS_URL + '?action=getActiveEvents').then(function(r) { return r.json(); }).catch(function() { return {}; }),
+      fetch(APPS_URL + '?action=getBirthdays').then(function(r)    { return r.json(); }).catch(function() { return {}; }),
+    ]);
+    var events    = evRes.success  ? evRes.data  : [];
+    var birthdays = bdRes.success  ? bdRes.data  : [];
+    annItems = buildAnnouncements(events, birthdays);
+  } catch(e) {
+    var v = getDailyVerse();
+    annItems = [{ icon:'✝️', main: v.text, sub:'— ' + v.ref, link:null }];
+  }
+  annIdx = 0;
+  renderAnn();
+  resetTimer();
+}
+
+/* ─── HELPERS ────────────────────────────────────────────────── */
+function fmtDate(d) {
+  if (!d) return '';
+  try {
+    var p = d.split('-');
+    var months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]) + ', ' + p[0];
+  } catch(e) { return d; }
+}
+function getMonthName(m) {
+  return ['January','February','March','April','May','June',
+          'July','August','September','October','November','December'][m];
+}
+
+/* ─── INIT ───────────────────────────────────────────────────── */
+// Show a verse immediately while data loads
+(function() {
+  var v = getDailyVerse();
+  annItems = [{ icon:'✝️', main: v.text, sub:'— ' + v.ref, link:null }];
+  renderAnn();
+})();
+
+initAnnouncements();
+</script>
+
+</body>
+</html>
