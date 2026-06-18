@@ -213,9 +213,20 @@
         </div>
       </div>
 
-      <!-- Upload -->
-      <div class="mt-5">
-        <label class="label">Upload Proof of Payment <span class="text-red-500">*</span></label>
+      <!-- Pay Later option -->
+      <div id="pay-later-wrap" class="mt-4 mb-1">
+        <label class="flex items-start gap-2.5 cursor-pointer">
+          <input type="checkbox" id="pay-later-check" onchange="togglePayLater()"
+                 class="mt-0.5 accent-amber-600 flex-shrink-0" />
+          <span class="text-sm text-gray-700 leading-snug">
+            <strong>I will pay at the event</strong> — skip proof upload for now. Payment will be settled on the day.
+          </span>
+        </label>
+      </div>
+
+      <!-- Upload (hidden when pay-later or fee=0) -->
+      <div id="proof-section" class="mt-5">
+        <label class="label">Upload Proof of Payment <span class="text-red-500" id="proof-required-star">*</span></label>
         <div id="upload-zone" class="upload-zone" onclick="document.getElementById('payment-file').click()">
           <svg id="upload-icon" class="w-8 h-8 mx-auto mb-2" style="color:#d97706"
                fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -457,6 +468,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('ev-desc-text').textContent = EVENT.description;
     document.getElementById('event-reminders').classList.remove('hidden');
   }
+  // Hide proof upload if this event is free
+  updateProofRequired();
 
   // ── Payment QR ──
   const qrImg = document.getElementById('payment-qr-img');
@@ -584,8 +597,8 @@ function addParent() {
         <input name="p_name" type="text" class="inp" placeholder="First Last" required/>
       </div>
       <div>
-        <label class="label">Contact Number</label>
-        <input name="p_phone" type="tel" class="inp" placeholder="09XXXXXXXXX"/>
+        <label class="label">Nickname <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input name="p_nick" type="text" class="inp" placeholder="e.g. Mama Joy, Papa Dan"/>
       </div>
     </div>`;
   document.getElementById('parents-wrap').appendChild(d);
@@ -764,8 +777,8 @@ function buildReview() {
 // ─── DATA COLLECTION ─────────────────────────────────────────
 function collect() {
   const parents  = [...document.querySelectorAll('#parents-wrap > div')].map(d=>({
-    name:  d.querySelector('[name="p_name"]').value.trim(),
-    phone: d.querySelector('[name="p_phone"]').value.trim(),
+    name:     d.querySelector('[name="p_name"]').value.trim(),
+    nickname: d.querySelector('[name="p_nick"]').value.trim(),
   }));
   const children = [...document.querySelectorAll('#children-wrap > div')].map(d=>({
     name: d.querySelector('[name="c_name"]').value.trim(),
@@ -786,13 +799,33 @@ function collect() {
 }
 
 // ─── SUBMISSION ──────────────────────────────────────────────
+function togglePayLater() {
+  const payLater  = document.getElementById('pay-later-check').checked;
+  const proofSec  = document.getElementById('proof-section');
+  if (proofSec) proofSec.style.display = payLater ? 'none' : '';
+}
+
+function updateProofRequired() {
+  // Hide proof upload if fee is 0
+  const fee      = EVENT ? (parseFloat(EVENT.fee) || 0) : 1;
+  const proofSec = document.getElementById('proof-section');
+  const plWrap   = document.getElementById('pay-later-wrap');
+  if (fee === 0) {
+    if (proofSec) proofSec.style.display = 'none';
+    if (plWrap)   plWrap.style.display   = 'none';
+  }
+}
+
 async function submitForm() {
   if (!document.getElementById('consent-data').checked) {
     showErr('Please agree to the data consent before submitting.'); return;
   }
+  const payLater  = document.getElementById('pay-later-check')?.checked || false;
+  const fee       = EVENT ? (parseFloat(EVENT.fee) || 0) : 0;
+  const needProof = !payLater && fee > 0;
   const fileInput = document.getElementById('payment-file');
-  if (!fileInput.files || fileInput.files.length===0) {
-    showErr('Please upload your proof of payment before submitting.');
+  if (needProof && (!fileInput.files || fileInput.files.length===0)) {
+    showErr('Please upload your proof of payment before submitting, or tick "I will pay at the event".');
     document.getElementById('upload-zone').scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
@@ -805,13 +838,16 @@ async function submitForm() {
   </svg> Submitting…`;
 
   const payload = collect();
+  payload.payLater = payLater;
 
-  try {
-    const file = fileInput.files[0];
-    payload.paymentProof = { name:file.name, mimeType:file.type, base64: await toBase64(file) };
-  } catch(e) {
-    showErr('Could not read the uploaded file. Please try again.');
-    resetBtn(btn); return;
+  if (!payLater && fileInput.files && fileInput.files.length > 0) {
+    try {
+      const file = fileInput.files[0];
+      payload.paymentProof = { name:file.name, mimeType:file.type, base64: await toBase64(file) };
+    } catch(e) {
+      showErr('Could not read the uploaded file. Please try again.');
+      resetBtn(btn); return;
+    }
   }
 
   payload._type      = 'event';
@@ -866,12 +902,13 @@ window.addEventListener('beforeunload', e => {
   <div class="max-w-4xl mx-auto px-4 text-center">
     <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
          onerror="this.style.display='none'" />
-    <p class="text-xs text-gray-400 mb-3">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
+    <p class="text-xs text-gray-300 mb-3">💛 Portal created by Fibee</p>
     <div class="flex items-center justify-center gap-6 text-xs">
-      <a href="https://www.facebook.com/groups/negorhomeschoolershub" target="_blank" rel="noopener"
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener"
          class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        NegOr Homeschoolers Official
+        NegOr HS Hub Official
       </a>
       <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
          class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">

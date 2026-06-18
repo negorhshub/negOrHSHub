@@ -25,7 +25,7 @@
     .tab-btn.active { background:var(--o); color:#fff; }
     .tab-btn:not(.active):hover { background:#fff7ed; color:var(--o); }
 
-    /* Form inputs */
+    /* Inputs */
     .inp { width:100%; padding:.6rem .875rem; border:1px solid #d1d5db; border-radius:.625rem; font-size:.875rem; outline:none; background:#fff; transition:border-color .15s,box-shadow .15s; }
     .inp:focus { border-color:var(--o); box-shadow:0 0 0 3px rgba(234,88,12,.1); }
     select.inp { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right .75rem center; background-size:1rem; padding-right:2.5rem; }
@@ -35,12 +35,13 @@
     .btn-o { display:inline-flex; align-items:center; gap:.35rem; padding:.65rem 1.25rem; background:var(--o); color:#fff; border-radius:.75rem; font-size:.875rem; font-weight:600; border:none; cursor:pointer; transition:background .15s; }
     .btn-o:hover { background:var(--o-dk); }
     .btn-o:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-sm { padding:.4rem .9rem; font-size:.78rem; border-radius:.5rem; }
     .btn-outline { display:inline-flex; align-items:center; gap:.3rem; padding:.6rem 1rem; background:#fff; border:1px solid #e5e7eb; color:#4b5563; border-radius:.75rem; font-size:.875rem; font-weight:500; cursor:pointer; transition:background .15s; }
     .btn-outline:hover { background:#f9fafb; }
 
-    /* Resource cards */
-    .res-card { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1.25rem; transition:box-shadow .15s,transform .15s; }
-    .res-card:hover { box-shadow:0 4px 16px rgba(234,88,12,.1); transform:translateY(-1px); }
+    /* Resource list rows */
+    .res-row { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1rem 1.25rem; box-shadow:0 1px 3px rgba(0,0,0,.04); transition:box-shadow .15s; }
+    .res-row:hover { box-shadow:0 3px 12px rgba(234,88,12,.1); }
     .badge { display:inline-block; padding:.15rem .5rem; border-radius:999px; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
     .badge-active   { background:#dcfce7; color:#15803d; }
     .badge-inactive { background:#f3f4f6; color:#6b7280; }
@@ -64,32 +65,17 @@
     </a>
     <div class="flex-1">
       <p class="font-bold leading-none" style="color:var(--o)">Resource Repository</p>
-      <p class="text-xs text-gray-400">NegOr HS Hub · Venues, Equipment & Activities</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · Venues, Equipment &amp; Activities</p>
     </div>
-    <button id="coord-btn" onclick="toggleCoordSection()"
-            class="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition">
-      Coordinator ▾
+    <button id="add-btn" onclick="openAddModal(currentTab)"
+            class="btn-o btn-sm flex items-center gap-1.5 text-xs">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+      </svg>
+      <span id="add-btn-label">Add Venue</span>
     </button>
   </div>
 </header>
-
-<!-- ═══ COORDINATOR LOGIN ═══ -->
-<div id="coord-section" class="hidden border-b border-gray-100" style="background:#fffbf7">
-  <div class="max-w-4xl mx-auto px-4 py-4">
-    <div id="res-login" class="flex items-center gap-2 max-w-sm">
-      <input id="coord-token" type="password" placeholder="Coordinator token" class="inp flex-1"
-             onkeydown="if(event.key==='Enter') coordLogin()" />
-      <button onclick="coordLogin()" class="btn-o py-2.5 text-sm px-4">Login</button>
-    </div>
-    <p id="coord-err" class="hidden text-xs text-red-600 mt-1">Invalid token.</p>
-    <div id="coord-actions" class="hidden flex flex-wrap gap-2 items-center">
-      <button onclick="openAddModal('venue')"     class="btn-o text-sm">+ Add Venue</button>
-      <button onclick="openAddModal('equipment')" class="btn-o text-sm">+ Add Equipment</button>
-      <button onclick="openAddModal('activity')"  class="btn-o text-sm">+ Log Activity</button>
-      <button onclick="coordLogout()" class="text-xs text-red-500 hover:underline ml-auto">Sign out</button>
-    </div>
-  </div>
-</div>
 
 <!-- ═══ HERO ═══ -->
 <div class="max-w-4xl mx-auto px-4 pt-7 pb-4 text-center">
@@ -97,14 +83,14 @@
     <span class="text-2xl">🗃️</span>
   </div>
   <h1 class="text-2xl font-extrabold" style="color:var(--o)">Resource Repository</h1>
-  <p class="text-sm text-gray-500 mt-1 max-w-md mx-auto">Venues, equipment, and a running log of all our community activities — in one place.</p>
+  <p class="text-sm text-gray-500 mt-1 max-w-md mx-auto">Venues, equipment, and a running log of all our community activities — in one place. Anyone can add!</p>
 </div>
 
 <!-- ═══ TABS ═══ -->
 <div class="max-w-4xl mx-auto px-4 mb-5">
   <div class="tab-bar max-w-md mx-auto">
-    <button class="tab-btn active" id="tab-venues"    onclick="switchTab('venues')">🏛️ Venues</button>
-    <button class="tab-btn"        id="tab-equipment" onclick="switchTab('equipment')">🔧 Equipment</button>
+    <button class="tab-btn active" id="tab-venues"     onclick="switchTab('venues')">🏛️ Venues</button>
+    <button class="tab-btn"        id="tab-equipment"  onclick="switchTab('equipment')">🔧 Equipment</button>
     <button class="tab-btn"        id="tab-activities" onclick="switchTab('activities')">📋 Activity Log</button>
   </div>
 </div>
@@ -119,10 +105,10 @@
     </div>
     <div id="venues-empty" class="hidden text-center py-12 text-gray-400">
       <div class="text-3xl mb-2">📭</div>
-      <p class="font-medium text-gray-600">No venues logged yet</p>
-      <p class="text-sm mt-1">Coordinators can add venues using the button above.</p>
+      <p class="font-medium text-gray-600">No venues added yet</p>
+      <p class="text-sm mt-1">Know a great spot? Add it for the community!</p>
     </div>
-    <div id="venues-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    <div id="venues-list" class="hidden space-y-3"></div>
   </div>
 
   <!-- Equipment Panel -->
@@ -132,10 +118,10 @@
     </div>
     <div id="equipment-empty" class="hidden text-center py-12 text-gray-400">
       <div class="text-3xl mb-2">📭</div>
-      <p class="font-medium text-gray-600">No equipment logged yet</p>
-      <p class="text-sm mt-1">Coordinators can add equipment using the button above.</p>
+      <p class="font-medium text-gray-600">No equipment added yet</p>
+      <p class="text-sm mt-1">Have something you can lend? Add it here!</p>
     </div>
-    <div id="equipment-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    <div id="equipment-list" class="hidden space-y-3"></div>
   </div>
 
   <!-- Activity Log Panel -->
@@ -146,7 +132,7 @@
     <div id="activities-empty" class="hidden text-center py-12 text-gray-400">
       <div class="text-3xl mb-2">📭</div>
       <p class="font-medium text-gray-600">No activities logged yet</p>
-      <p class="text-sm mt-1">Coordinators can log activities using the button above.</p>
+      <p class="text-sm mt-1">Log an activity to keep a record of what the community has done!</p>
     </div>
     <div id="activities-list" class="hidden space-y-3"></div>
   </div>
@@ -173,85 +159,82 @@
   <div class="max-w-4xl mx-auto px-4 text-center">
     <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
          onerror="this.style.display='none'" />
-    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschool Community · Est. 2023</p>
-    <p class="text-xs text-gray-300">💛 Created by Fibee</p>
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
+    <p class="text-xs text-gray-300 mb-3">💛 Portal created by Fibee</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr HS Hub Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
   </div>
 </footer>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
-var coordToken  = '';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqK95VnVUauW9oSRSW6mUTIaD5cxB0aCxMa2PwvxHgJKisM6dVbzJRUs8-YgtglbJhUA/exec';
 var currentTab  = 'venues';
 var currentType = '';
 
-/* ─── AUTH ─────────────────────────────────────────────────── */
-function toggleCoordSection() {
-  document.getElementById('coord-section').classList.toggle('hidden');
-}
+// ── TABS ──────────────────────────────────────────────────────
 
-async function coordLogin() {
-  var t = document.getElementById('coord-token').value.trim();
-  if (!t) return;
-  document.getElementById('coord-err').classList.add('hidden');
-  try {
-    var res  = await fetch(APPS_SCRIPT_URL + '?action=getEvents&token=' + encodeURIComponent(t));
-    var data = await res.json();
-    if (data.error === 'Unauthorized') { document.getElementById('coord-err').classList.remove('hidden'); return; }
-    coordToken = t;
-    localStorage.setItem('nhh_coord_token', t);
-    document.getElementById('res-login').classList.add('hidden');
-    document.getElementById('coord-actions').classList.remove('hidden');
-    document.getElementById('coord-btn').textContent = 'Coordinator ✓';
-  } catch(e) {
-    document.getElementById('coord-err').textContent = 'Connection error.';
-    document.getElementById('coord-err').classList.remove('hidden');
-  }
-}
+var TAB_LABELS = { venues:'Add Venue', equipment:'Add Equipment', activities:'Log Activity' };
 
-function coordLogout() {
-  coordToken = '';
-  localStorage.removeItem('nhh_coord_token');
-  document.getElementById('res-login').classList.remove('hidden');
-  document.getElementById('coord-actions').classList.add('hidden');
-  document.getElementById('coord-token').value = '';
-  document.getElementById('coord-btn').textContent = 'Coordinator ▾';
-}
-
-/* ─── TABS ──────────────────────────────────────────────────── */
 function switchTab(tab) {
   currentTab = tab;
   ['venues','equipment','activities'].forEach(function(t) {
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
     document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
   });
+  document.getElementById('add-btn-label').textContent = TAB_LABELS[tab] || 'Add';
 }
 
-/* ─── LOAD DATA ─────────────────────────────────────────────── */
+// ── LOAD DATA ─────────────────────────────────────────────────
+
 async function loadAll() {
   await Promise.all([loadVenues(), loadEquipment(), loadActivities()]);
 }
 
+function messengerUrl(handle) {
+  if (!handle) return '';
+  handle = handle.trim().replace(/^@/,'').replace(/^m\.me\//,'');
+  return handle ? 'https://m.me/' + handle : '';
+}
+
 async function loadVenues() {
   try {
-    var res  = await fetch(APPS_SCRIPT_URL + '?action=getVenues');
-    var data = await res.json();
+    var res   = await fetch(APPS_SCRIPT_URL + '?action=getVenues');
+    var data  = await res.json();
     var items = (data.success && data.data) ? data.data : [];
     document.getElementById('venues-loading').classList.add('hidden');
     if (items.length === 0) { document.getElementById('venues-empty').classList.remove('hidden'); return; }
-    document.getElementById('venues-grid').classList.remove('hidden');
-    document.getElementById('venues-grid').innerHTML = items.map(function(v) {
-      var cond = v['status'] || 'Active';
-      return '<div class="res-card">' +
-        '<div class="flex items-start justify-between gap-2 mb-2">' +
-          '<div>' +
-            '<p class="font-bold text-gray-900 text-sm">' + escHtml(v['name'] || 'Unnamed Venue') + '</p>' +
-            '<p class="text-xs text-gray-500 mt-0.5">' + escHtml(v['type'] || '') + (v['capacity'] ? ' · Up to ' + escHtml(v['capacity']) + ' pax' : '') + '</p>' +
+    var list = document.getElementById('venues-list');
+    list.classList.remove('hidden');
+    list.innerHTML = items.map(function(v) {
+      var status  = v['status'] || 'Active';
+      var msUrl   = messengerUrl(v['contact_number'] || '');
+      var contact = v['contact_person'] || '';
+      var messenger = v['contact_number'] || '';
+      return '<div class="res-row">' +
+        '<div class="flex items-start gap-3">' +
+          '<div class="flex-1 min-w-0">' +
+            '<div class="flex flex-wrap items-center gap-2 mb-1">' +
+              '<p class="font-bold text-gray-900 text-base">' + escHtml(v['name'] || 'Unnamed Venue') + '</p>' +
+              '<span class="badge ' + (status === 'Active' ? 'badge-active' : 'badge-inactive') + '">' + escHtml(status) + '</span>' +
+            '</div>' +
+            '<p class="text-xs text-gray-500 mb-2">' + escHtml(v['type'] || '') + (v['capacity'] ? ' · Up to ' + escHtml(v['capacity']) + ' pax' : '') + '</p>' +
+            (v['address'] ? '<p class="text-xs text-gray-600 mb-1">📍 ' + escHtml(v['address']) + '</p>' : '') +
+            (contact ? '<p class="text-xs text-gray-500">👤 ' + escHtml(contact) +
+              (msUrl ? '&nbsp;·&nbsp;<a href="' + msUrl + '" target="_blank" rel="noopener" class="text-orange-600 font-medium hover:underline">📲 Messenger</a>' : '') +
+              '</p>' : '') +
+            (v['notes'] ? '<p class="text-xs text-gray-400 mt-2 italic">' + escHtml(v['notes']) + '</p>' : '') +
           '</div>' +
-          '<span class="badge ' + (cond === 'Active' ? 'badge-active' : 'badge-inactive') + '">' + escHtml(cond) + '</span>' +
         '</div>' +
-        (v['address'] ? '<p class="text-xs text-gray-600 mb-2">📍 ' + escHtml(v['address']) + '</p>' : '') +
-        (v['contact_person'] ? '<p class="text-xs text-gray-500">👤 ' + escHtml(v['contact_person']) + (v['contact_number'] ? ' · ' + escHtml(v['contact_number']) : '') + '</p>' : '') +
-        (v['notes'] ? '<p class="text-xs text-gray-400 mt-2 italic">' + escHtml(v['notes']) + '</p>' : '') +
       '</div>';
     }).join('');
   } catch(e) {
@@ -262,25 +245,31 @@ async function loadVenues() {
 
 async function loadEquipment() {
   try {
-    var res  = await fetch(APPS_SCRIPT_URL + '?action=getEquipment');
-    var data = await res.json();
+    var res   = await fetch(APPS_SCRIPT_URL + '?action=getEquipment');
+    var data  = await res.json();
     var items = (data.success && data.data) ? data.data : [];
     document.getElementById('equipment-loading').classList.add('hidden');
     if (items.length === 0) { document.getElementById('equipment-empty').classList.remove('hidden'); return; }
-    document.getElementById('equipment-grid').classList.remove('hidden');
-    document.getElementById('equipment-grid').innerHTML = items.map(function(eq) {
-      var cond = (eq['condition'] || 'Good').toLowerCase();
+    var list = document.getElementById('equipment-list');
+    list.classList.remove('hidden');
+    list.innerHTML = items.map(function(eq) {
+      var cond     = (eq['condition'] || 'Good').toLowerCase();
       var badgeCls = cond === 'good' ? 'badge-good' : cond === 'fair' ? 'badge-fair' : 'badge-repair';
-      return '<div class="res-card">' +
-        '<div class="flex items-start justify-between gap-2 mb-2">' +
-          '<div>' +
-            '<p class="font-bold text-gray-900 text-sm">' + escHtml(eq['item_name'] || 'Item') + '</p>' +
-            '<p class="text-xs text-gray-500 mt-0.5">' + escHtml(eq['category'] || '') + (eq['quantity'] ? ' · Qty: ' + escHtml(eq['quantity']) : '') + '</p>' +
+      var msUrl    = messengerUrl(eq['contact'] || '');
+      return '<div class="res-row">' +
+        '<div class="flex items-start gap-3">' +
+          '<div class="flex-1 min-w-0">' +
+            '<div class="flex flex-wrap items-center gap-2 mb-1">' +
+              '<p class="font-bold text-gray-900 text-base">' + escHtml(eq['item_name'] || 'Item') + '</p>' +
+              '<span class="badge ' + badgeCls + '">' + escHtml(eq['condition'] || 'Good') + '</span>' +
+            '</div>' +
+            '<p class="text-xs text-gray-500 mb-2">' + escHtml(eq['category'] || '') + (eq['quantity'] ? ' · Qty: ' + escHtml(eq['quantity']) : '') + '</p>' +
+            (eq['custodian'] ? '<p class="text-xs text-gray-600">👤 ' + escHtml(eq['custodian']) +
+              (msUrl ? '&nbsp;·&nbsp;<a href="' + msUrl + '" target="_blank" rel="noopener" class="text-orange-600 font-medium hover:underline">📲 Messenger</a>' : '') +
+              '</p>' : '') +
+            (eq['notes'] ? '<p class="text-xs text-gray-400 mt-2 italic">' + escHtml(eq['notes']) + '</p>' : '') +
           '</div>' +
-          '<span class="badge ' + badgeCls + '">' + escHtml(eq['condition'] || 'Good') + '</span>' +
         '</div>' +
-        (eq['custodian'] ? '<p class="text-xs text-gray-600">👤 ' + escHtml(eq['custodian']) + (eq['contact'] ? ' · ' + escHtml(eq['contact']) : '') + '</p>' : '') +
-        (eq['notes'] ? '<p class="text-xs text-gray-400 mt-2 italic">' + escHtml(eq['notes']) + '</p>' : '') +
       '</div>';
     }).join('');
   } catch(e) {
@@ -291,16 +280,17 @@ async function loadEquipment() {
 
 async function loadActivities() {
   try {
-    var res  = await fetch(APPS_SCRIPT_URL + '?action=getActivityLog');
-    var data = await res.json();
+    var res   = await fetch(APPS_SCRIPT_URL + '?action=getActivityLog');
+    var data  = await res.json();
     var items = (data.success && data.data) ? data.data : [];
     document.getElementById('activities-loading').classList.add('hidden');
     if (items.length === 0) { document.getElementById('activities-empty').classList.remove('hidden'); return; }
-    document.getElementById('activities-list').classList.remove('hidden');
-    document.getElementById('activities-list').innerHTML = items.map(function(a) {
-      return '<div class="res-card flex gap-4 items-start">' +
-        '<div class="flex-shrink-0 text-center">' +
-          '<p class="text-xs font-bold text-orange-600 w-14">' + escHtml(fmtDateShort(a['date_done']) || '—') + '</p>' +
+    var list = document.getElementById('activities-list');
+    list.classList.remove('hidden');
+    list.innerHTML = items.map(function(a) {
+      return '<div class="res-row flex gap-4 items-start">' +
+        '<div class="flex-shrink-0 text-center min-w-[3rem]">' +
+          '<p class="text-xs font-bold text-orange-600">' + escHtml(fmtDateShort(a['date_done']) || '—') + '</p>' +
         '</div>' +
         '<div class="flex-1 min-w-0">' +
           '<p class="font-semibold text-gray-900 text-sm">' + escHtml(a['activity_name'] || 'Activity') + '</p>' +
@@ -320,29 +310,31 @@ async function loadActivities() {
   }
 }
 
-/* ─── ADD MODAL ─────────────────────────────────────────────── */
+// ── ADD MODAL ─────────────────────────────────────────────────
+
 var FORMS = {
-  venue: {
+  venues: {
     title: '🏛️ Add Venue',
     fields: [
-      { id:'vn-name',    label:'Venue Name *', type:'text',   placeholder:'e.g., Kawayan Casitas, Dauin' },
-      { id:'vn-address', label:'Address / Location', type:'text', placeholder:'Full address or landmark' },
-      { id:'vn-type',    label:'Type', type:'select', options:['Indoor','Outdoor','Both'] },
-      { id:'vn-cap',     label:'Capacity (pax)', type:'number', placeholder:'e.g., 60' },
-      { id:'vn-contact', label:'Contact Person', type:'text', placeholder:'Name' },
-      { id:'vn-phone',   label:'Contact Number', type:'tel',  placeholder:'+63...' },
-      { id:'vn-notes',   label:'Notes', type:'textarea', placeholder:'Parking, A/V, kitchen access…' },
+      { id:'vn-name',      label:'Venue Name *', type:'text',   placeholder:'e.g., Kawayan Casitas, Dauin' },
+      { id:'vn-address',   label:'Address / Location', type:'text', placeholder:'Full address or landmark' },
+      { id:'vn-type',      label:'Type', type:'select', options:['Indoor','Outdoor','Both'] },
+      { id:'vn-cap',       label:'Capacity (pax)', type:'number', placeholder:'e.g., 60' },
+      { id:'vn-contact',   label:'Contact Person', type:'text', placeholder:'Name' },
+      { id:'vn-messenger', label:'Messenger Username', type:'text', placeholder:'e.g., juandelacruz' },
+      { id:'vn-notes',     label:'Notes', type:'textarea', placeholder:'Parking, A/V, kitchen access…' },
     ],
     save: function() {
       var name = document.getElementById('vn-name').value.trim();
-      if (!name) { alert('Venue name is required.'); return; }
-      return { _type:'addVenue', _token:coordToken,
+      if (!name) { alert('Venue name is required.'); return null; }
+      return { _type:'addVenue',
         name:          name,
         address:       document.getElementById('vn-address').value.trim(),
         type:          document.getElementById('vn-type').value,
         capacity:      document.getElementById('vn-cap').value.trim(),
         contactPerson: document.getElementById('vn-contact').value.trim(),
-        contactNumber: document.getElementById('vn-phone').value.trim(),
+        // Store Messenger handle in contactNumber column (existing column reused)
+        contactNumber: document.getElementById('vn-messenger').value.trim(),
         notes:         document.getElementById('vn-notes').value.trim(),
       };
     },
@@ -353,30 +345,31 @@ var FORMS = {
     title: '🔧 Add Equipment',
     fields: [
       { id:'eq-name',      label:'Item Name *', type:'text', placeholder:'e.g., Projector, Folding Tables' },
-      { id:'eq-category',  label:'Category', type:'select', options:['Furniture','AV Equipment','Supplies','Kitchen','Arts & Crafts','Sports','Other'] },
+      { id:'eq-category',  label:'Category', type:'select', options:['Furniture','AV Equipment','Musical Instrument','Supplies','Kitchen','Arts & Crafts','Sports','Other'] },
       { id:'eq-qty',       label:'Quantity', type:'number', placeholder:'1' },
       { id:'eq-condition', label:'Condition', type:'select', options:['Good','Fair','Needs Repair'] },
-      { id:'eq-custodian', label:'Custodian (who has it)', type:'text', placeholder:'Name' },
-      { id:'eq-contact',   label:'Custodian Contact', type:'tel', placeholder:'+63...' },
+      { id:'eq-custodian', label:'Who Has It (Custodian)', type:'text', placeholder:'Name' },
+      { id:'eq-contact',   label:'Messenger Username', type:'text', placeholder:'e.g., juandelacruz' },
       { id:'eq-notes',     label:'Notes', type:'textarea', placeholder:'Any details about the item…' },
     ],
     save: function() {
       var name = document.getElementById('eq-name').value.trim();
-      if (!name) { alert('Item name is required.'); return; }
-      return { _type:'addEquipment', _token:coordToken,
-        itemName:   name,
-        category:   document.getElementById('eq-category').value,
-        quantity:   document.getElementById('eq-qty').value || 1,
-        condition:  document.getElementById('eq-condition').value,
-        custodian:  document.getElementById('eq-custodian').value.trim(),
-        contact:    document.getElementById('eq-contact').value.trim(),
-        notes:      document.getElementById('eq-notes').value.trim(),
+      if (!name) { alert('Item name is required.'); return null; }
+      return { _type:'addEquipment',
+        itemName:  name,
+        category:  document.getElementById('eq-category').value,
+        quantity:  document.getElementById('eq-qty').value || 1,
+        condition: document.getElementById('eq-condition').value,
+        custodian: document.getElementById('eq-custodian').value.trim(),
+        // Store Messenger handle in contact column
+        contact:   document.getElementById('eq-contact').value.trim(),
+        notes:     document.getElementById('eq-notes').value.trim(),
       };
     },
     reload: loadEquipment,
     resetTo: 'equipment',
   },
-  activity: {
+  activities: {
     title: '📋 Log an Activity',
     fields: [
       { id:'ac-name',     label:'Activity Name *', type:'text', placeholder:'e.g., General Assembly — May 2026' },
@@ -384,13 +377,13 @@ var FORMS = {
       { id:'ac-date',     label:'Date Done', type:'date', placeholder:'' },
       { id:'ac-venue',    label:'Venue Used', type:'text', placeholder:'Where did it happen?' },
       { id:'ac-attend',   label:'Approximate Attendance', type:'number', placeholder:'e.g., 45' },
-      { id:'ac-notes',    label:'Notes / Highlights', type:'textarea', placeholder:'Brief summary of what happened, what worked well…' },
+      { id:'ac-notes',    label:'Notes / Highlights', type:'textarea', placeholder:'Brief summary of what happened…' },
       { id:'ac-by',       label:'Logged By', type:'text', placeholder:'Your name' },
     ],
     save: function() {
       var name = document.getElementById('ac-name').value.trim();
-      if (!name) { alert('Activity name is required.'); return; }
-      return { _type:'addActivity', _token:coordToken,
+      if (!name) { alert('Activity name is required.'); return null; }
+      return { _type:'addActivity',
         activityName: name,
         category:     document.getElementById('ac-category').value,
         dateDone:     document.getElementById('ac-date').value,
@@ -406,20 +399,20 @@ var FORMS = {
 };
 
 function openAddModal(type) {
-  if (!coordToken) { alert('Please log in as coordinator first.'); return; }
   currentType = type;
   var f = FORMS[type];
+  if (!f) return;
   document.getElementById('modal-title').textContent = f.title;
   document.getElementById('modal-body').innerHTML = f.fields.map(function(field) {
     var input = '';
     if (field.type === 'select') {
       input = '<select id="' + field.id + '" class="inp">' +
-        field.options.map(function(o) { return '<option value="' + o + '">' + o + '</option>'; }).join('') +
+        field.options.map(function(o) { return '<option>' + o + '</option>'; }).join('') +
         '</select>';
     } else if (field.type === 'textarea') {
-      input = '<textarea id="' + field.id + '" rows="3" class="inp resize-none" placeholder="' + field.placeholder + '"></textarea>';
+      input = '<textarea id="' + field.id + '" rows="3" class="inp resize-none" placeholder="' + escHtml(field.placeholder) + '"></textarea>';
     } else {
-      input = '<input id="' + field.id + '" type="' + field.type + '" class="inp" placeholder="' + (field.placeholder||'') + '" />';
+      input = '<input id="' + field.id + '" type="' + field.type + '" class="inp" placeholder="' + escHtml(field.placeholder||'') + '" />';
     }
     return '<div><label class="label">' + field.label + '</label>' + input + '</div>';
   }).join('');
@@ -439,7 +432,6 @@ async function saveResource() {
 
   var btn = document.getElementById('modal-save-btn');
   btn.disabled = true; btn.textContent = 'Saving…';
-
   try {
     var res  = await fetch(APPS_SCRIPT_URL, {
       method:'POST', headers:{'Content-Type':'text/plain'},
@@ -448,22 +440,18 @@ async function saveResource() {
     var data = await res.json();
     if (data.success) {
       closeModal();
-      switchTab(f.resetTo);
-      // Reset and reload
-      document.getElementById('venues-grid').classList.add('hidden');
-      document.getElementById('venues-empty').classList.add('hidden');
-      document.getElementById('venues-loading').classList.remove('hidden');
-      document.getElementById('equipment-grid').classList.add('hidden');
-      document.getElementById('equipment-empty').classList.add('hidden');
-      document.getElementById('equipment-loading').classList.remove('hidden');
-      document.getElementById('activities-list').classList.add('hidden');
-      document.getElementById('activities-empty').classList.add('hidden');
-      document.getElementById('activities-loading').classList.remove('hidden');
+      // Reset list/empty state for the panel that just got new data
+      var t = f.resetTo;
+      var suffix = t === 'activities' ? '' : '';
+      ['list','empty','loading'].forEach(function(s) {
+        var el = document.getElementById(t + '-' + (s === 'list' ? (t === 'activities' ? 'list' : 'list') : s));
+        if (el) el.classList.add('hidden');
+      });
+      var loadEl = document.getElementById(t + '-loading');
+      if (loadEl) loadEl.classList.remove('hidden');
+      switchTab(t);
       await f.reload();
-      // Hide all loading spinners for the other panels
-      document.getElementById('venues-loading').classList.add('hidden');
-      document.getElementById('equipment-loading').classList.add('hidden');
-      document.getElementById('activities-loading').classList.add('hidden');
+      if (loadEl) loadEl.classList.add('hidden');
     } else {
       alert('Error: ' + (data.error || 'Could not save.'));
     }
@@ -471,10 +459,12 @@ async function saveResource() {
   finally { btn.disabled = false; btn.textContent = 'Save'; }
 }
 
-/* ─── HELPERS ────────────────────────────────────────────────── */
+// ── HELPERS ───────────────────────────────────────────────────
+
 function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
 function fmtDateShort(d) {
   if (!d) return '';
   try {
@@ -484,15 +474,8 @@ function fmtDateShort(d) {
   } catch(e) { return d; }
 }
 
-/* ─── INIT ───────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', function() {
-  loadAll();
-  var saved = localStorage.getItem('nhh_coord_token');
-  if (saved) {
-    document.getElementById('coord-token').value = saved;
-    coordLogin();
-  }
-});
+// ── INIT ──────────────────────────────────────────────────────
+loadAll();
 </script>
 
 </body>

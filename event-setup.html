@@ -340,7 +340,26 @@
 
 <!-- ═══════════════ SCRIPT ═══════════════ -->
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygn2eJxPYP1LPS4DcM2p0GFQV8BCAEuionHidra6z9eYqcRzKq3MuOjNPwFvRuMcc5/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqK95VnVUauW9oSRSW6mUTIaD5cxB0aCxMa2PwvxHgJKisM6dVbzJRUs8-YgtglbJhUA/exec';
+
+// ── DATE / TIME HELPERS ───────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '';
+  const p = d.split('-');
+  if (p.length !== 3) return d;
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  return (months[parseInt(p[1])-1] || p[1]) + ' ' + parseInt(p[2]) + ', ' + p[0];
+}
+function fmtTime(t) {
+  if (!t) return '';
+  try {
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hr   = ((h % 12) || 12);
+    return hr + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+  } catch(e) { return t; }
+}
 
 let coordToken    = '';
 let allEvents     = [];
@@ -467,9 +486,10 @@ function renderEvents() {
             <span class="badge ${badgeCls}">${status}</span>
           </div>
           <p class="text-xs text-gray-500">
-            ${ev['event_date']?'📅 '+ev['event_date']+'  ':''}
-            ${ev['venue']?'📍 '+ev['venue']+'  ':''}
-            ${ev['fee_(₱)']?'💳 ₱'+parseFloat(ev['fee_(₱)']).toLocaleString():''}
+            ${ev['event_date']?'📅 '+fmtDate(ev['event_date']):''}
+            ${ev['start_time']?' · ⏰ '+fmtTime(ev['start_time'])+(ev['end_time']?' – '+fmtTime(ev['end_time']):''):''}
+            ${ev['venue']?'  📍 '+ev['venue']:''}
+            ${ev['fee_(₱)']?'  💳 ₱'+parseFloat(ev['fee_(₱)']).toLocaleString():''}
           </p>
           ${ev['description'] ? `<p class="text-xs text-gray-400 mt-1">${ev['description']}</p>` : ''}
           <p class="text-xs mt-2"><span class="font-semibold" style="color:var(--t)">${count}</span> <span class="text-gray-400">registration${count!=1?'s':''}</span>
@@ -807,12 +827,13 @@ async function post(payload) {
   <div class="max-w-4xl mx-auto px-4 text-center">
     <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
          onerror="this.style.display='none'" />
-    <p class="text-xs text-gray-400 mb-3">Negros Oriental Homeschool Community · Est. 2023</p>
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
+    <p class="text-xs text-gray-300 mb-3">💛 Portal created by Fibee</p>
     <div class="flex items-center justify-center gap-6 text-xs">
-      <a href="https://www.facebook.com/groups/negorhomeschoolershub" target="_blank" rel="noopener"
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener"
          class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-        NegOr Homeschoolers Official
+        NegOr HS Hub Official
       </a>
       <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
          class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">

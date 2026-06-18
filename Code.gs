@@ -90,6 +90,8 @@ function doPost(e) {
       case 'createRecap':       return doPostCreateRecap(data);
       case 'uploadPhoto':       return doPostUploadPhoto(data);
       case 'addBook':           return doPostAddBook(data);
+      case 'editBook':          return doPostEditBook(data);
+      case 'deleteBook':        return doPostDeleteBook(data);
       case 'borrowBook':        return doPostBorrowBook(data);
       case 'returnBook':        return doPostReturnBook(data);
       case 'markChecklist':     return doPostMarkChecklistItem(data);
@@ -373,12 +375,22 @@ function doPostEventRegistration(data) {
   const timestamp    = new Date();
 
   var proofUrl = '';
-  if (data.paymentProof && data.paymentProof.base64) {
-    try { proofUrl = savePaymentProof(regId, data.paymentProof); }
-    catch(e) { Logger.log('Event proof upload failed: ' + e.toString()); }
+  if (!data.payLater && data.paymentProof && data.paymentProof.base64) {
+    try {
+      // Naming: yyyy_mm_eventname_parentname
+      var now2   = new Date();
+      var yyyy   = now2.getFullYear();
+      var mm2    = String(now2.getMonth() + 1).padStart(2, '0');
+      var evName = (data.eventTitle || event['event_title'] || 'event')
+                     .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_+$/,'');
+      var pName  = ((data.parents && data.parents[0] && data.parents[0].name) || 'family')
+                     .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_+$/,'');
+      data.paymentProof.name = yyyy + '_' + mm2 + '_' + evName + '_' + pName;
+      proofUrl = savePaymentProof(regId, data.paymentProof);
+    } catch(e) { Logger.log('Event proof upload failed: ' + e.toString()); }
   }
 
-  const parents  = (data.parents  || []).map(function(p) { return p.name + (p.phone ? ' | ' + p.phone : ''); }).join(', ');
+  const parents  = (data.parents  || []).map(function(p) { return p.name; }).join(', ');
   const children = (data.children || []).map(function(c) { return c.name + ' (age ' + c.age + ')'; }).join(', ');
 
   rgSheet.appendRow([
@@ -396,6 +408,7 @@ function doPostEventRegistration(data) {
     data.notes                || '',
     proofUrl,
     data.consentData ? 'Yes' : 'No',
+    data.payLater ? 'Pay at Event' : (proofUrl ? 'Pending' : 'Unpaid'),
   ]);
 
   try { sendEventAdminNotification(regId, data, event, timestamp, proofUrl); }
@@ -472,7 +485,12 @@ function saveEventQrCode(eventId, fileData) {
 
 function savePaymentProof(id, fileData) {
   const folder   = DriveApp.getFolderById(CONFIG.PROOF_OF_PAYMENT_FOLDER_ID);
-  const fileName = id + '_payment_proof_' + new Date().getTime() + '_' + (fileData.name || 'proof');
+  // Use caller-supplied name if provided (event reg sets yyyy_mm_eventname_parentname)
+  const ext      = (fileData.name || 'proof').split('.').pop().toLowerCase();
+  const baseName = fileData.name && fileData.name.includes('_')
+                   ? fileData.name
+                   : id + '_proof';
+  const fileName = baseName.replace(/\.[^.]+$/, '') + '.' + ext;
   const blob     = Utilities.newBlob(
     Utilities.base64Decode(fileData.base64),
     fileData.mimeType || 'application/octet-stream',
@@ -691,11 +709,25 @@ function sheetToObjects(sheet) {
   const data = sheet.getDataRange().getValues();
   if (data.length < 2) return [];
   const headers = data[0].map(function(h) {
-    return h.toString().toLowerCase().replace(/\s+/g, '_');
+    return h.toString().toLowerCase().replace(/[\s()\/]+/g, '_').replace(/_+$/g, '');
   });
   return data.slice(1).map(function(row) {
     var obj = {};
-    headers.forEach(function(h, i) { obj[h] = row[i] != null ? row[i].toString() : ''; });
+    headers.forEach(function(h, i) {
+      var v = row[i];
+      if (v instanceof Date) {
+        // Format as YYYY-MM-DD — avoids locale-dependent .toString() like "Sat Jul 18 2026 00:00:00 GMT+0800"
+        if (v.getFullYear() > 1899) {
+          var mm = String(v.getMonth() + 1).padStart(2, '0');
+          var dd = String(v.getDate()).padStart(2, '0');
+          obj[h] = v.getFullYear() + '-' + mm + '-' + dd;
+        } else {
+          obj[h] = '';
+        }
+      } else {
+        obj[h] = v != null ? v.toString() : '';
+      }
+    });
     return obj;
   });
 }
@@ -740,7 +772,7 @@ function setupSpreadsheet() {
     'Parent ID','Family ID','Family Name',
     'Full Name','Email','Phone',
     'Relationship','Preferred Contact','Blood Type','Occupation',
-    'Nickname','Birthday (MM-DD)',
+    'Nickname','Birthday',
   ]]);
   parentSheet.getRange(1,1,1,12).setBackground('#8B3214').setFontColor('#fff').setFontWeight('bold');
   parentSheet.setFrozenRows(1);
@@ -774,9 +806,11 @@ function getRecapsData() {
     if (!sheet) return jsonResponse({ success: true, data: [] });
     const rows  = sheetToObjects(sheet);
     // Parse sections JSON for each recap
+    // Header "Sections (JSON)" → snake_case key "sections_json"
     const parsed = rows.map(function(r) {
       var sections = [];
-      try { if (r['sections']) sections = JSON.parse(r['sections']); } catch(e) {}
+      var raw = r['sections_json'] || r['sections'] || '';
+      try { if (raw) sections = JSON.parse(raw); } catch(e) {}
       return Object.assign({}, r, { sections: sections });
     });
     parsed.sort(function(a,b){ return (b['recap_date']||'').localeCompare(a['recap_date']||''); });
@@ -844,7 +878,7 @@ function doPostAddBook(data) {
   const bookId  = 'BK-' + String(lastRow).padStart(3, '0');
   const now     = new Date().toISOString().slice(0,10);
   sheet.appendRow([bookId, data.title||'', data.author||'', data.genre||'',
-    data.condition||'Good', data.ownerName||'', data.ownerContact||'',
+    data.condition||'Good', data.ownerName||'', data.ownerMessenger||'',
     '', '', '', 'Available', data.notes||'', now]);
   return jsonResponse({ success: true, bookId });
 }
@@ -879,6 +913,42 @@ function doPostReturnBook(data) {
       sheet.getRange(i+1, 9).setValue('');
       sheet.getRange(i+1,10).setValue('');
       sheet.getRange(i+1,11).setValue('Available');
+      return jsonResponse({ success: true });
+    }
+  }
+  return jsonResponse({ success: false, error: 'Book not found.' });
+}
+
+function doPostEditBook(data) {
+  if (!data.bookId) return jsonResponse({ success: false, error: 'bookId required' });
+  const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.SHEET_BOOKS);
+  if (!sheet) return jsonResponse({ success: false, error: 'Books sheet not found.' });
+  const rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === data.bookId) {
+      if (data.title     !== undefined) sheet.getRange(i+1, 2).setValue(data.title);
+      if (data.author    !== undefined) sheet.getRange(i+1, 3).setValue(data.author);
+      if (data.genre     !== undefined) sheet.getRange(i+1, 4).setValue(data.genre);
+      if (data.condition !== undefined) sheet.getRange(i+1, 5).setValue(data.condition);
+      if (data.ownerName !== undefined) sheet.getRange(i+1, 6).setValue(data.ownerName);
+      if (data.ownerMessenger !== undefined) sheet.getRange(i+1, 7).setValue(data.ownerMessenger);
+      if (data.notes     !== undefined) sheet.getRange(i+1,12).setValue(data.notes);
+      return jsonResponse({ success: true });
+    }
+  }
+  return jsonResponse({ success: false, error: 'Book not found.' });
+}
+
+function doPostDeleteBook(data) {
+  if (!data.bookId) return jsonResponse({ success: false, error: 'bookId required' });
+  const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(CONFIG.SHEET_BOOKS);
+  if (!sheet) return jsonResponse({ success: false, error: 'Books sheet not found.' });
+  const rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === data.bookId) {
+      sheet.deleteRow(i + 1);
       return jsonResponse({ success: true });
     }
   }
@@ -963,7 +1033,8 @@ function getBirthdaysData() {
     var parentSheet = ss.getSheetByName(CONFIG.SHEET_PARENTS);
     if (parentSheet) {
       sheetToObjects(parentSheet).forEach(function(parent) {
-        var bday = (parent['birthday_mm_dd'] || '').trim();
+        // Header is "Birthday" → key "birthday"
+        var bday = (parent['birthday'] || '').trim();
         if (!bday) return;
         // Accept both MM-DD and MM/DD formats
         var parts = bday.replace('/', '-').split('-');
@@ -1009,7 +1080,7 @@ function addBirthdayNicknameColumns() {
       pSheet.getRange(1, 11).setBackground('#8B3214').setFontColor('#fff').setFontWeight('bold');
     }
     if (pLastCol < 12) {
-      pSheet.getRange(1, 12).setValue('Birthday (MM-DD)');
+      pSheet.getRange(1, 12).setValue('Birthday');
       pSheet.getRange(1, 12).setBackground('#8B3214').setFontColor('#fff').setFontWeight('bold');
     }
     Logger.log('Parents sheet updated.');
@@ -1046,9 +1117,7 @@ function getVenuesData() {
 }
 
 function doPostAddVenue(data) {
-  if (data._token !== CONFIG.COORDINATOR_TOKEN && data._token !== CONFIG.ADMIN_TOKEN) {
-    return jsonResponse({ success: false, error: 'Unauthorized' });
-  }
+  // Open to all community members — no token required
   const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
   const sheet = ss.getSheetByName(CONFIG.SHEET_VENUES);
   if (!sheet) return jsonResponse({ success: false, error: 'Venues sheet not found. Run addResourcesSheets().' });
@@ -1083,9 +1152,7 @@ function getEquipmentData() {
 }
 
 function doPostAddEquipment(data) {
-  if (data._token !== CONFIG.COORDINATOR_TOKEN && data._token !== CONFIG.ADMIN_TOKEN) {
-    return jsonResponse({ success: false, error: 'Unauthorized' });
-  }
+  // Open to all community members — no token required
   const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
   const sheet = ss.getSheetByName(CONFIG.SHEET_EQUIPMENT);
   if (!sheet) return jsonResponse({ success: false, error: 'Equipment sheet not found. Run addResourcesSheets().' });
@@ -1121,9 +1188,7 @@ function getActivityLogData() {
 }
 
 function doPostAddActivity(data) {
-  if (data._token !== CONFIG.COORDINATOR_TOKEN && data._token !== CONFIG.ADMIN_TOKEN) {
-    return jsonResponse({ success: false, error: 'Unauthorized' });
-  }
+  // Open to all community members — no token required
   const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
   const sheet = ss.getSheetByName(CONFIG.SHEET_ACTIVITIES);
   if (!sheet) return jsonResponse({ success: false, error: 'ActivityLog sheet not found. Run addResourcesSheets().' });
@@ -1185,7 +1250,7 @@ function setupEventsSpreadsheet() {
   var bkSheet = ss.getSheetByName(CONFIG.SHEET_BOOKS) || ss.insertSheet(CONFIG.SHEET_BOOKS);
   bkSheet.getRange(1,1,1,13).setValues([[
     'Book ID','Title','Author','Genre','Condition',
-    'Owner Name','Owner Contact','Current Holder','Holder Contact','Date Borrowed',
+    'Owner Name','Owner Messenger','Current Holder','Holder Messenger','Date Borrowed',
     'Status','Notes','Date Added',
   ]]);
   bkSheet.getRange(1,1,1,13).setBackground('#059669').setFontColor('#fff').setFontWeight('bold');
@@ -1316,6 +1381,23 @@ function updateEventsSheetV3() {
   SpreadsheetApp.getUi().alert('✅ Photo Folder URL column added to Events sheet (col O).');
 }
 
+
+/**
+ * Rename "Owner Contact" → "Owner Messenger" and "Holder Contact" → "Holder Messenger"
+ * in the Books sheet. Run once if your sheet was set up before v3.1.
+ */
+function updateBooksSheetV31() {
+  var ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(CONFIG.SHEET_BOOKS);
+  if (!sheet) { SpreadsheetApp.getUi().alert('Books sheet not found.'); return; }
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var changed = false;
+  headers.forEach(function(h, i) {
+    if (h === 'Owner Contact')  { sheet.getRange(1, i+1).setValue('Owner Messenger');  changed = true; }
+    if (h === 'Holder Contact') { sheet.getRange(1, i+1).setValue('Holder Messenger'); changed = true; }
+  });
+  SpreadsheetApp.getUi().alert(changed ? '✅ Books sheet headers updated!' : 'Headers already up to date — nothing to do.');
+}
 
 /**
  * Add Venues, Equipment, and ActivityLog sheets to the Events spreadsheet.
