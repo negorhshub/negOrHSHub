@@ -26,11 +26,11 @@ const CONFIG = {
 
   // ── MEMBERSHIP SPREADSHEET ───────────────────────────────
   // URL: https://docs.google.com/spreadsheets/d/<<THIS_PART>>/edit
-  SPREADSHEET_ID: '1ShgFilvO96pYVLNhP7X15IqLXJrwsbFqEsKv_dTKQgw',
+  SPREADSHEET_ID: '1ArP7C-s3lcxz9mnu9PErhDnOMCj9XDjnSGDoAI2Fpdw',
 
   // ── EVENTS SPREADSHEET (separate Google Sheet) ───────────
   // Create a NEW blank spreadsheet at sheets.new, copy its ID here
-  EVENTS_SPREADSHEET_ID: '1uUs0Xg-Fw8k9W_bY4WBZbdbpD4D_QsHApOYoKjb4AAc',
+  EVENTS_SPREADSHEET_ID: '1xpCoJ5-RNDeFf0AaEFXEtoXZoqIUBRMG4tmViedZ2Cg',
 
   // ── GMAIL ────────────────────────────────────────────────
   // Receives new-registration and new-event-registration notifications
@@ -40,8 +40,8 @@ const CONFIG = {
   // ADMIN_TOKEN   — full access (admin dashboard, all data)
   // COORDINATOR_TOKEN — event setup, view registrations (share with coordinators & volunteers)
   // Generate tokens at: https://www.uuidgenerator.net/
-  ADMIN_TOKEN:       '123456',
-  COORDINATOR_TOKEN: '111111',
+  ADMIN_TOKEN:       'negor_admin',
+  COORDINATOR_TOKEN: 'negor_coord',
 
   // ── COMMUNITY NAME ───────────────────────────────────────
   COMMUNITY_NAME: 'NegOr HS Hub',
@@ -70,7 +70,7 @@ const CONFIG = {
 
   // For recap section photos (displayed on Recap Corner page):
   // Leave empty to reuse payment proof folder as fallback.
-  RECAP_PHOTOS_FOLDER_ID: '',
+  RECAP_PHOTOS_FOLDER_ID: '1PxN1HZ70ToaWoS2iZs_29Ukzygf87F7Y',
 };
 
 
@@ -919,6 +919,7 @@ function doPostReturnBook(data) {
   return jsonResponse({ success: false, error: 'Book not found.' });
 }
 
+
 function doPostEditBook(data) {
   if (!data.bookId) return jsonResponse({ success: false, error: 'bookId required' });
   const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
@@ -954,7 +955,6 @@ function doPostDeleteBook(data) {
   }
   return jsonResponse({ success: false, error: 'Book not found.' });
 }
-
 
 // ─────────────────────────────────────────────────────────────
 //  ORGANIZER CHECKLIST
@@ -1381,9 +1381,8 @@ function updateEventsSheetV3() {
   SpreadsheetApp.getUi().alert('✅ Photo Folder URL column added to Events sheet (col O).');
 }
 
-
 /**
- * Rename "Owner Contact" → "Owner Messenger" and "Holder Contact" → "Holder Messenger"
+ * Rename "Owner Contact" → "Owner Messenger" and "Borrower Contact" → "Borrower Messenger"
  * in the Books sheet. Run once if your sheet was set up before v3.1.
  */
 function updateBooksSheetV31() {
@@ -1394,7 +1393,7 @@ function updateBooksSheetV31() {
   var changed = false;
   headers.forEach(function(h, i) {
     if (h === 'Owner Contact')  { sheet.getRange(1, i+1).setValue('Owner Messenger');  changed = true; }
-    if (h === 'Holder Contact') { sheet.getRange(1, i+1).setValue('Holder Messenger'); changed = true; }
+    if (h === 'Borrower Contact') { sheet.getRange(1, i+1).setValue('Borrower Messenger'); changed = true; }
   });
   SpreadsheetApp.getUi().alert(changed ? '✅ Books sheet headers updated!' : 'Headers already up to date — nothing to do.');
 }
