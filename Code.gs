@@ -60,12 +60,33 @@ const CONFIG = {
   SHEET_VENUES    : 'Venues',
   SHEET_EQUIPMENT : 'Equipment',
   SHEET_ACTIVITIES: 'ActivityLog',
+  SHEET_FEEDBACK  : 'Feedback',
 
   // ── GOOGLE DRIVE FOLDERS ─────────────────────────────────
   // Create folders in Drive, open each, copy the ID from the URL:
   // https://drive.google.com/drive/folders/<<THIS_PART>>
+  //
+  // Recommended structure in your Google Drive:
+  //   Portal/
+  //     ├── Proof of Payment/
+  //     │     ├── Events/        ← PROOF_EVENTS_FOLDER_ID
+  //     │     ├── Membership/    ← PROOF_MEMBERSHIP_FOLDER_ID
+  //     │     └── T-shirts/      ← PROOF_TSHIRTS_FOLDER_ID
+  //     └── Recap Photos/        ← RECAP_PHOTOS_FOLDER_ID
+  //
+  // NOTE: Save both Google Sheets (Membership + Events) inside your
+  //       Portal folder in Google Drive so everything is organized together.
 
-  // For event registration payment proofs and QR codes:
+  // Proof of payment subfolders — separate by type for easy tracking
+  // Naming conventions:
+  //   Membership: YYYY_MM_membership_[family_name]
+  //   Events:     YYYY_MM_[event_name]_[family_name]
+  //   T-shirts:   YYYY_MM_tshirt_[family_name]
+  PROOF_MEMBERSHIP_FOLDER_ID: '1W-1j0f0XXfCEEn6OB_SHl_VtrYoBAqZI',   // Portal/Proof of Payment/Membership
+  PROOF_EVENTS_FOLDER_ID:     '18Z2ULH397gZ7nSI67XDJ5Oxakl6zmLig',   // Portal/Proof of Payment/Events
+  PROOF_TSHIRTS_FOLDER_ID:    '1OiwD7pEqh_iqdYvo-hPwhsL7UXPwyXxh',   // Portal/Proof of Payment/T-shirts
+
+  // Legacy fallback — used if the above are empty (keeps existing proofs working)
   PROOF_OF_PAYMENT_FOLDER_ID: '1Nb7-27Q4no3PDPXaoR6KyZZ8DoETgWOZ',
 
   // For recap section photos (displayed on Recap Corner page):
@@ -98,6 +119,8 @@ function doPost(e) {
       case 'addVenue':          return doPostAddVenue(data);
       case 'addEquipment':      return doPostAddEquipment(data);
       case 'addActivity':       return doPostAddActivity(data);
+      case 'addUniformOrder':   return doPostAddUniformOrder(data);
+      case 'submitFeedback':    return doPostSubmitFeedback(data);
       default:                  return doPostMembership(data);
     }
   } catch (err) {
@@ -125,9 +148,13 @@ function doGet(e) {
   if (action === 'getRecaps')       return getRecapsData();
   if (action === 'getBooks')        return getBooksData();
   if (action === 'getBirthdays')    return getBirthdaysData();
-  if (action === 'getVenues')       return getVenuesData();
-  if (action === 'getEquipment')    return getEquipmentData();
-  if (action === 'getActivityLog')  return getActivityLogData();
+  if (action === 'getVenues')        return getVenuesData();
+  if (action === 'getEquipment')     return getEquipmentData();
+  if (action === 'getActivityLog')   return getActivityLogData();
+  if (action === 'getUniformOrders') return getUniformOrdersData();
+
+  // ── Token check (used by gated pages to validate access) ──
+  if (action === 'verifyCoordinator') return jsonResponse({ success: isCoordinator, role: isAdmin ? 'admin' : (isCoordinator ? 'coordinator' : '') });
 
   // ── Coordinator & Admin actions ──────────────────────────
   const coordActions = ['getEvents','getEventRegistrations','getChecklist'];
@@ -165,7 +192,13 @@ function doPostMembership(data) {
 
   var proofUrl = '';
   if (data.paymentProof && data.paymentProof.base64) {
-    try { proofUrl = savePaymentProof(familyId, data.paymentProof); }
+    // Naming: YYYY_MM_membership_[family_name]
+    try {
+      var now0  = new Date();
+      var fam0  = (data.familyName || 'family').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/_+$/,'');
+      data.paymentProof.name = now0.getFullYear() + '_' + String(now0.getMonth()+1).padStart(2,'0') + '_membership_' + fam0;
+      proofUrl = savePaymentProof(familyId, data.paymentProof, CONFIG.PROOF_MEMBERSHIP_FOLDER_ID || CONFIG.PROOF_OF_PAYMENT_FOLDER_ID);
+    }
     catch(e) { Logger.log('Membership proof upload failed: ' + e.toString()); }
   }
 
@@ -386,7 +419,7 @@ function doPostEventRegistration(data) {
       var pName  = ((data.parents && data.parents[0] && data.parents[0].name) || 'family')
                      .toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_+$/,'');
       data.paymentProof.name = yyyy + '_' + mm2 + '_' + evName + '_' + pName;
-      proofUrl = savePaymentProof(regId, data.paymentProof);
+      proofUrl = savePaymentProof(regId, data.paymentProof, CONFIG.PROOF_EVENTS_FOLDER_ID || CONFIG.PROOF_OF_PAYMENT_FOLDER_ID);
     } catch(e) { Logger.log('Event proof upload failed: ' + e.toString()); }
   }
 
@@ -483,8 +516,10 @@ function saveEventQrCode(eventId, fileData) {
   return 'https://drive.google.com/uc?id=' + file.getId() + '&export=view';
 }
 
-function savePaymentProof(id, fileData) {
-  const folder   = DriveApp.getFolderById(CONFIG.PROOF_OF_PAYMENT_FOLDER_ID);
+function savePaymentProof(id, fileData, folderId) {
+  // folderId: pass the specific subfolder ID; falls back to legacy PROOF_OF_PAYMENT_FOLDER_ID
+  const folderToUse = folderId || CONFIG.PROOF_OF_PAYMENT_FOLDER_ID;
+  const folder   = DriveApp.getFolderById(folderToUse);
   // Use caller-supplied name if provided (event reg sets yyyy_mm_eventname_parentname)
   const ext      = (fileData.name || 'proof').split('.').pop().toLowerCase();
   const baseName = fileData.name && fileData.name.includes('_')
@@ -502,6 +537,47 @@ function savePaymentProof(id, fileData) {
 }
 
 
+
+
+// ─────────────────────────────────────────────────────────────
+//  EVENT FEEDBACK
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Submit a post-event feedback response.
+ * Saves to SHEET_FEEDBACK tab in the Events spreadsheet.
+ * Public — no token required.
+ */
+function doPostSubmitFeedback(data) {
+  const ss        = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+  var   sheet     = ss.getSheetByName(CONFIG.SHEET_FEEDBACK);
+
+  // Auto-create the sheet if it doesn't exist yet
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SHEET_FEEDBACK);
+    sheet.appendRow([
+      'Timestamp', 'Event ID', 'Event Title', 'Name', 'Role',
+      'Rating', 'Went Well', 'To Improve', 'Comments'
+    ]);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+  }
+
+  const timestamp = new Date();
+  sheet.appendRow([
+    timestamp,
+    data.eventId    || '',
+    data.eventTitle || '',
+    data.name       || '(anonymous)',
+    data.role       || '',
+    data.rating     || '',
+    data.wentWell   || '',
+    data.toImprove  || '',
+    data.comments   || '',
+  ]);
+
+  return jsonResponse({ success: true });
+}
 
 
 // ─────────────────────────────────────────────────────────────
@@ -1289,8 +1365,19 @@ function setupEventsSpreadsheet() {
   alSheet.getRange(1,1,1,8).setBackground('#9a3412').setFontColor('#fff').setFontWeight('bold');
   alSheet.setFrozenRows(1);
 
+  // Uniform Orders  A–K (11 cols)
+  var uoSheet = ss.getSheetByName('UniformOrders') || ss.insertSheet('UniformOrders');
+  uoSheet.getRange(1,1,1,11).setValues([[
+    'Order ID','Timestamp','Family Name','Parent Name','No. of Children',
+    'Children (JSON)','Mandatory Subtotal (₱)','Optional Subtotal (₱)','Grand Total (₱)',
+    'Proof of Payment URL','Payment Status',
+  ]]);
+  uoSheet.getRange(1,1,1,11).setBackground('#92400e').setFontColor('#fff').setFontWeight('bold');
+  uoSheet.setFrozenRows(1);
+  uoSheet.setColumnWidth(6, 300);
+
   Logger.log('✅ Events spreadsheet setup complete.');
-  SpreadsheetApp.getUi().alert('Events spreadsheet ready! Tabs: Events, Registrations, Recaps, Books, Checklist, Venues, Equipment, ActivityLog.');
+  SpreadsheetApp.getUi().alert('Events spreadsheet ready! Tabs: Events, Registrations, Recaps, Books, Checklist, Venues, Equipment, ActivityLog, UniformOrders.');
 }
 
 
@@ -1433,6 +1520,88 @@ function addResourcesSheets() {
     '• Equipment: ' + e + '\n' +
     '• ActivityLog: ' + a
   );
+}
+
+
+// ─────────────────────────────────────────────────────────────
+//  UNIFORM / T-SHIRT ORDERS
+// ─────────────────────────────────────────────────────────────
+
+function getUniformOrdersData() {
+  try {
+    const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('UniformOrders');
+    if (!sheet) return jsonResponse({ success: true, data: [] });
+    return jsonResponse({ success: true, data: sheetToObjects(sheet) });
+  } catch(err) { return jsonResponse({ success: false, error: err.toString() }); }
+}
+
+function doPostAddUniformOrder(data) {
+  // Coordinator-gated while in testing — only coordinators/admins may submit orders.
+  if (data._token !== CONFIG.COORDINATOR_TOKEN && data._token !== CONFIG.ADMIN_TOKEN) {
+    return jsonResponse({ success: false, error: 'Unauthorized' });
+  }
+  const ss    = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('UniformOrders');
+  if (!sheet) return jsonResponse({ success: false, error: 'UniformOrders sheet not found. Run addUniformOrdersSheet() first.' });
+
+  var proofUrl = '';
+  if (data.paymentProof && data.paymentProof.base64) {
+    try {
+      var now  = new Date();
+      var yyyy = now.getFullYear();
+      var mm   = String(now.getMonth() + 1).padStart(2, '0');
+      var fam  = (data.familyName || 'family').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/_+$/,'');
+      data.paymentProof.name = yyyy + '_' + mm + '_tshirt_' + fam;
+      proofUrl = savePaymentProof('UNIF-' + sheet.getLastRow(), data.paymentProof, CONFIG.PROOF_TSHIRTS_FOLDER_ID || CONFIG.PROOF_OF_PAYMENT_FOLDER_ID);
+    } catch(e) { Logger.log('Uniform proof upload failed: ' + e.toString()); }
+  }
+
+  const lastRow = sheet.getLastRow();
+  const orderId = 'UNIF-' + String(lastRow).padStart(3, '0');
+  const timestamp = new Date();
+
+  var childrenJson = '[]';
+  try { childrenJson = JSON.stringify(data.children || []); } catch(e) {}
+
+  // A–K: Order ID, Timestamp, Family Name, Parent Name, No. of Children,
+  //       Children JSON, Mandatory Subtotal, Optional Subtotal, Grand Total,
+  //       Proof URL, Payment Status
+  sheet.appendRow([
+    orderId,
+    timestamp,
+    data.familyName       || '',
+    data.parentName       || '',
+    (data.children || []).length,
+    childrenJson,
+    data.mandatorySubtotal || 0,
+    data.optionalSubtotal  || 0,
+    data.grandTotal        || 0,
+    proofUrl,
+    'Pending',
+  ]);
+
+  return jsonResponse({ success: true, orderId: orderId });
+}
+
+/**
+ * Add UniformOrders sheet to Events spreadsheet.
+ * Run once to set up the new sheet.
+ */
+function addUniformOrdersSheet() {
+  const ss = SpreadsheetApp.openById(CONFIG.EVENTS_SPREADSHEET_ID);
+  var sheet = ss.getSheetByName('UniformOrders');
+  if (sheet) { SpreadsheetApp.getUi().alert('UniformOrders sheet already exists — nothing to do.'); return; }
+  sheet = ss.insertSheet('UniformOrders');
+  sheet.getRange(1,1,1,11).setValues([[
+    'Order ID','Timestamp','Family Name','Parent Name','No. of Children',
+    'Children (JSON)','Mandatory Subtotal (₱)','Optional Subtotal (₱)','Grand Total (₱)',
+    'Proof of Payment URL','Payment Status',
+  ]]);
+  sheet.getRange(1,1,1,11).setBackground('#B5451B').setFontColor('#fff').setFontWeight('bold');
+  sheet.setFrozenRows(1);
+  sheet.setColumnWidth(6, 300);
+  SpreadsheetApp.getUi().alert('✅ UniformOrders sheet created!');
 }
 
 
