@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Event Setup — NegOr HS Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="tailwind.min.css" />
   <style>
     :root {
       --t:    #B5451B;
@@ -102,7 +104,7 @@
       Access Panel
     </button>
     <p class="text-xs text-gray-400 mt-4">
-      Or add <code class="bg-gray-100 px-1 rounded">?token=COORDINATOR_TOKEN</code> to the URL.
+      Or add <code class="bg-gray-100 px-1 rounded">?token=YOUR_TOKEN</code> to the URL.
     </p>
   </div>
 </div>
@@ -115,7 +117,7 @@
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <a href="index.html">
-          <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-8 w-auto object-contain flex-shrink-0"
+          <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-8 w-auto object-contain flex-shrink-0"
                onerror="this.style.display='none'" />
         </a>
         <div>
@@ -340,7 +342,7 @@
 
 <!-- ═══════════════ SCRIPT ═══════════════ -->
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxs0hg0jffuQNDM2xcJmvfTMPLjFBQ_qm6NiKsPvEd7s_RtiTGDpdSzXJPL-LenSdSq/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqK95VnVUauW9oSRSW6mUTIaD5cxB0aCxMa2PwvxHgJKisM6dVbzJRUs8-YgtglbJhUA/exec';
 
 // ── DATE / TIME HELPERS ───────────────────────────────────────
 function fmtDate(d) {
@@ -371,9 +373,7 @@ let editEventId   = null;  // null = create mode, string = edit mode
 // ── LOGIN ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const urlToken = new URLSearchParams(window.location.search).get('token');
-  if (urlToken) { document.getElementById('token-input').value = urlToken; doLogin(); return; }
-  const saved = localStorage.getItem('nhh_coord_token');
-  if (saved) { document.getElementById('token-input').value = saved; doLogin(); }
+  if (urlToken) { document.getElementById('token-input').value = urlToken; doLogin(); }
 });
 
 async function doLogin() {
@@ -397,7 +397,6 @@ async function doLogin() {
     }
 
     // Token is valid (even if data is empty or sheet not set up yet)
-    localStorage.setItem('nhh_coord_token', coordToken);
     allEvents = data.data || [];
     document.getElementById('login-gate').classList.add('hidden');
     document.getElementById('dashboard').classList.remove('hidden');
@@ -424,7 +423,6 @@ async function doLogin() {
 
 function doLogout() {
   coordToken = ''; allEvents = []; allRegs = [];
-  localStorage.removeItem('nhh_coord_token');
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('login-gate').classList.remove('hidden');
   history.replaceState({}, document.title, location.pathname);
@@ -474,7 +472,8 @@ function renderEvents() {
     const badgeCls   = status === 'Active' ? 'badge-active' : status === 'Closed' ? 'badge-closed' : 'badge-draft';
     const count      = ev['registration_count'] || ev['registration count'] || '0';
     const regLink    = location.origin + location.pathname.replace('event-setup.html','') + 'event-registration.html?event=' + ev['event_id'];
-    const canActivate = status === 'Draft';
+    const canActivate = status === 'Draft' || status === 'Closed';
+    const activateLabel = status === 'Closed' ? '▶ Reactivate' : '▶ Activate';
     const canClose    = status === 'Active';
 
     return `
@@ -498,7 +497,7 @@ function renderEvents() {
           </p>
         </div>
         <div class="flex flex-wrap gap-2 flex-shrink-0">
-          ${canActivate ? `<button onclick="updateStatus('${ev['event_id']}','Active')" class="btn-sm btn-activate">▶ Activate</button>` : ''}
+          ${canActivate ? `<button onclick="updateStatus('${ev['event_id']}','Active')" class="btn-sm btn-activate">${activateLabel}</button>` : ''}
           ${canClose    ? `<button onclick="updateStatus('${ev['event_id']}','Closed')" class="btn-sm btn-close-ev">■ Close</button>` : ''}
           <button onclick="openEditEvent('${ev['event_id']}')" class="btn-sm" style="background:#f3f4f6;color:#374151;border:1px solid #e5e7eb">✏️ Edit</button>
           <button onclick="viewRegistrations('${ev['event_id']}')" class="btn-sm btn-view">👥 Registrations</button>
@@ -825,7 +824,7 @@ async function post(payload) {
 <!-- ═══ FOOTER ═══ -->
 <footer class="mt-12 py-8 border-t border-gray-100 bg-white">
   <div class="max-w-4xl mx-auto px-4 text-center">
-    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+    <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
          onerror="this.style.display='none'" />
     <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
     <p class="text-xs text-gray-300 mb-3">💛 Portal created by Fibee</p>

@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NegOr HS Hub — Community Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="tailwind.min.css" />
   <style>
     :root {
       --t:    #B5451B;
@@ -138,7 +140,7 @@
     <!-- Light backdrop makes transparent logo pop against the dark gradient -->
     <div class="inline-block rounded-3xl px-6 py-4 mb-1"
          style="background:rgba(254,243,238,0.22); backdrop-filter:blur(4px);">
-      <img src="logo.png" alt="NegOr Homeschoolers Hub"
+      <img src="logo.webp" alt="NegOr Homeschoolers Hub"
            class="h-32 object-contain"
            onerror="this.style.display='none'; document.getElementById('hero-fallback').style.display='block'" />
     </div>
@@ -258,6 +260,22 @@
       </div>
     </div>
 
+    <!-- 7. Event Feedback -->
+    <div class="module-card">
+      <div class="h-1" style="background:#0891b2"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#ecfeff">💬</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Event Feedback</h3>
+        <p class="text-sm text-gray-500 leading-snug">Share your post-event thoughts — what went well and what we can improve. Helps us plan better huddles.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="feedback.html" class="btn-go" style="background:#0891b2">Give Feedback <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
   </div>
 
   <!-- Coordinator / Admin section -->
@@ -271,7 +289,7 @@
       <div class="p-6 flex-1">
         <div class="flex items-start justify-between mb-4">
           <div class="card-icon" style="background:#eff6ff">✅</div>
-          <span class="badge-coord">Coordinators</span>
+          <span class="badge-live">● Live</span>
         </div>
         <h3 class="font-bold text-gray-900 mb-1">Organizer Checklist</h3>
         <p class="text-sm text-gray-500 leading-snug">Role-based checklists for Term Coordinators and Huddle Volunteers — plus an integrated workflow guide.</p>
@@ -313,13 +331,29 @@
       </div>
     </div>
 
+    <!-- 10. T-Shirt Order -->
+    <div class="module-card">
+      <div class="h-1" style="background:#92400e"></div>
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fef3c7">👕</div>
+          <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background:#fef3c7;color:#92400e">🔒 Testing · Coordinators</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">2026 T-Shirt Order</h3>
+        <p class="text-sm text-gray-500 leading-snug">Order your NHH community uniform — Mandatory orange shirt (₱450) and optional cream shirt (₱350). Kids sizes available. <em>Currently open to coordinators for testing.</em></p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="uniform.html" class="btn-go" style="background:#92400e">Coordinator Access <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <!-- ═══ FOOTER ═══ -->
 <footer class="py-10 border-t" style="border-color:var(--t-pal); background:var(--t-lt)">
   <div class="max-w-4xl mx-auto px-4 text-center">
-    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-12 mx-auto mb-3 object-contain"
+    <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-12 mx-auto mb-3 object-contain"
          onerror="this.style.display='none'" />
     <p class="text-xs text-gray-500 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
     <p class="text-xs mb-4" style="color:var(--t-md)">💛 Portal created by Fibee</p>
@@ -337,7 +371,7 @@
 </footer>
 
 <script>
-const APPS_URL = 'https://script.google.com/macros/s/AKfycbxs0hg0jffuQNDM2xcJmvfTMPLjFBQ_qm6NiKsPvEd7s_RtiTGDpdSzXJPL-LenSdSq/exec';
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbyAccFyFzcNgGN2FdiyACxSBvTxIdVy3M0lPSEsph17vrhzzY5cbFvQGDCTQXtSK_G__w/exec';
 
 /* ─── VERSE OF THE DAY — local rotation ────────────────────── */
 const VERSES = [

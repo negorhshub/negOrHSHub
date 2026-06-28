@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Organizer Checklist — NegOr HS Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="tailwind.min.css" />
   <style>
     :root {
       --t:    #B5451B;
@@ -73,7 +75,7 @@
 <header class="bg-white shadow-sm sticky top-0 z-20 no-print" style="border-bottom:1px solid var(--b-pl)">
   <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
     <a href="index.html">
-      <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+      <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
            onerror="this.style.display='none'" />
     </a>
     <div class="flex-1">
@@ -181,7 +183,7 @@
 <!-- ═══ FOOTER ═══ -->
 <footer class="mt-4 py-8 border-t border-gray-100 bg-white no-print">
   <div class="max-w-3xl mx-auto px-4 text-center">
-    <img src="logo.png" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+    <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
          onerror="this.style.display='none'" />
     <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
     <p class="text-xs text-gray-300">💛 Portal created by Fibee</p>
@@ -189,7 +191,7 @@
 </footer>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxs0hg0jffuQNDM2xcJmvfTMPLjFBQ_qm6NiKsPvEd7s_RtiTGDpdSzXJPL-LenSdSq/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqK95VnVUauW9oSRSW6mUTIaD5cxB0aCxMa2PwvxHgJKisM6dVbzJRUs8-YgtglbJhUA/exec';
 
 /* ─── CHECKLIST DEFINITIONS ──────────────────────────────────────── */
 
@@ -201,15 +203,15 @@ const COORD_CHECKLIST = {
   guide: [
     {
       title: '📋 Start of Term',
-      body: 'Meet with co-coordinators, confirm the term theme, create the term calendar, and set up shared documents (Drive folder, group chat). Announce the term plan in the Facebook group early so families can plan ahead.'
+      body: 'Meet with co-coordinators, confirm the term theme, create the term calendar, and set up shared documents (Google Drive folder, group chat). Post the term calendar to the FB group early so families can save the date.'
     },
     {
       title: '📅 During Term — Per Event',
-      body: 'For each huddle: create the event in the Hub, promote it 2 weeks out, coordinate with the Huddle Volunteer team, track registrations, and handle payment queries. Keep the group updated after each event.'
+      body: 'For each huddle: create the event in the Hub, coordinate with the Huddle Volunteer team (who will handle the Facebook announcement), track registrations, and handle payment queries. Keep the group updated after each event.'
     },
     {
       title: '📊 Between Huddles',
-      body: 'Follow up on unpaid registrations, update the budget tracker, check the Book Exchange log, and respond to member questions. Coordinate with topic volunteers for upcoming events.'
+      body: 'Follow up on unpaid registrations, update the budget tracker,  and respond to member questions. Coordinate with topic volunteers for upcoming events.'
     },
     {
       title: '🏁 End of Term',
@@ -221,20 +223,21 @@ const COORD_CHECKLIST = {
       label: '📋 Start of Term',
       items: [
       //  { id:'c01', label:'Meet co-coordinators and confirm term plan', note:'Align on theme, schedule, and responsibilities' },
-        { id:'c02', label:'Create the term calendar (dates + event types)', note:'Share with core team for approval' },
-        { id:'c03', label:'Set up shared Drive folder for the term', note:'Subfolders: Events, Finance, Photos, Resources' },
+        { id:'c02', label:'Create the term calendar (dates + event types)', note:'Share with core group members' },
+        { id:'c03', label:'Set up shared Google Drive folder for the term', note:'Example subfolders: Events, Finance, Photos, Resources, etc.' },
       //  { id:'c04', label:'Announce term plan in the FB group', note:'Include dates and how to register' },
-        { id:'c05', label:'Confirm Huddle Volunteer teams per event', note:'At least 2 volunteers per event' }
+        { id:'c05', label:'Confirm Huddle Volunteer teams per event', note:'At least 2 volunteers per event' },
+        { id:'c21', label:'Post term calendar to FB Group (save the date)', note:'' }
       ]
     },
     {
       label: '📅 Per-Event Setup',
       items: [
       //  { id:'c06', label:'Create event in the Hub (Event Setup page)', note:'Include venue, fee, registration type, Drive folder link' },
-        { id:'c07', label:'Prepare and post event announcement on Facebook', note:'2 weeks before; include registration link' },
+      //  { id:'c07', label:'Prepare and post event announcement on Facebook', note:'Assigned to Huddle Volunteer' },
       //  { id:'c08', label:'Brief the Huddle Volunteer team', note:'Share checklist, venue contact, and logistics' },
         { id:'c08', label:'Add event photo folder URL in Event Setup', note:'So the Photo Archive page shows the Drive link' },
-      { id:'c09', label:'Prepare payment QR code + track registrations', note:'Check Admin Dashboard before the event' },
+        { id:'c09', label:'Prepare payment QR code + track registrations', note:'Check Admin Dashboard before the event' },
       //  { id:'c10', label:'Confirm venue, headcount, and materials list', note:'3 days before the event' }
       ]
     },
@@ -267,8 +270,8 @@ const VOL_CHECKLIST = {
   guideIntro: 'As a Huddle Volunteer, your job is to make the event run smoothly on the day. Here\'s the flow.',
   guide: [
     {
-      title: '📅 2–3 Weeks Before',
-      body: 'Confirm your role with the Term Coordinator (logistics, registration desk, program flow, photography, etc.). Review the event details, venue, and expected attendance. Prepare any materials you\'re responsible for.'
+      title: '📅 2–4 Weeks Before',
+      body: 'Convene with other Huddle Volunteers and the Term Coordinator to finalize event details. Review the event, confirm your role, agree on awards, and start preparing your materials. Post the Facebook announcement 2 weeks before the event.'
     },
     {
       title: '🗓 Week Before',
@@ -276,21 +279,22 @@ const VOL_CHECKLIST = {
     },
     {
       title: '🎉 Day of Event',
-      body: 'Arrive 30–45 minutes early. Set up the registration desk, welcome families, manage the sign-in sheet, help with program flow, assist speakers/facilitators. Keep things warm and welcoming!'
+      body: 'Arrive 30–45 minutes early. Set up the registration desk, welcome families, manage the sign-in sheet, help with program flow, assist the host, speakers, and facilitators. Keep things warm and welcoming!'
     },
     {
       title: '✅ After the Event',
-      body: 'Help with pack-up, submit your attendance count to the coordinator. Upload your photos to the Drive folder. Share quick feedback — what worked, what could improve.'
+      body: 'Help with pack-up, submit your attendance count to the coordinator. Upload your photos to the Google Drive folder. Share quick feedback — 1 thing that went well and 1 thing to improve.'
     }
   ],
   phases: [
     {
-      label: '📅 2–3 Weeks Before',
+      label: '📅 3–4 Weeks Before',
       items: [
-      //  { id:'v01', label:'Confirm your volunteer role with the Term Coordinator', note:'e.g. registration, program flow, venue setup, photography' },
-        { id:'v02', label:'Review event details (date, time, venue, fee, format)', note:'Check the Events page for full info' },
-        { id:'v03', label:'Know your assigned tasks and who to coordinate with', note:'Ask the coordinator for the volunteer brief' },
-        { id:'v04', label:'Prepare any materials you\'re responsible for', note:'e.g. activity supplies, name tag blanks, printed programs' }
+        { id:'v02', label:'Review event details (date, time, venue, fee, format)', note:'Convene with other Huddle Volunteers & Term Coordinator to finalize the event details' },
+        { id:'v03', label:'Know your assigned tasks and who to coordinate with', note:'' },
+        { id:'v_awards', label:'Agree on the awards to be given for this event', note:'Awards will be presented on Learners\' Day' },
+        { id:'v04', label:'Prepare any materials you\'re responsible for', note:'e.g. activity supplies, name tag blanks, printed programs, certificates, pin designs' },
+        { id:'v_fb', label:'Prepare and post event announcement on Facebook', note:'Post 2 weeks before; include registration link' }
       ]
     },
     {
@@ -298,7 +302,7 @@ const VOL_CHECKLIST = {
       items: [
       //  { id:'v05', label:'Final check-in with Term Coordinator', note:'Confirm headcount, any last-minute changes' },
         { id:'v06', label:'Print sign-in sheets and name tags', note:'Bring extras — some families register on the day' },
-        { id:'v07', label:'Confirm venue access and setup instructions', note:'Who has the key? Is there parking? A/V equipment?' },
+        { id:'v07', label:'Confirm venue access and setup instructions', note:'' },
         { id:'v08', label:'Remind assigned helpers of their tasks', note:'Send a reminder the day before via group chat' }
       ]
     },
@@ -308,9 +312,9 @@ const VOL_CHECKLIST = {
         { id:'v09', label:'Arrive 30–45 minutes early', note:'Early setup prevents last-minute stress' },
         { id:'v10', label:'Set up registration desk and welcome area', note:'Sign-in sheet, name tags, fee collection materials' },
         { id:'v11', label:'Welcome families and assist with registration', note:'Mark attendance, collect fees, hand out name tags' },
-        { id:'v12', label:'Assist with program flow (intro, transitions, closing)', note:'Coordinate with speaker/facilitator' },
-        { id:'v13', label:'Take photos throughout the event', note:'Candid + group shots; upload to Drive folder after' },
-        { id:'v14', label:'Keep the event on schedule', note:'Give 10-min heads-up to facilitator before wrap-up' }
+        { id:'v12', label:'Assist with program flow (intro, transitions, closing)', note:'Coordinate with host & speaker/facilitator' },
+        { id:'v13', label:'Take photos throughout the event', note:'Candid + group shots; upload to Google Drive folder after' },
+        { id:'v14', label:'Keep the event on schedule', note:'' }
       ]
     },
     {
@@ -318,8 +322,8 @@ const VOL_CHECKLIST = {
       items: [
         { id:'v15', label:'Help with pack-up and venue cleanup', note:'Leave the space better than you found it' },
         { id:'v16', label:'Submit attendance count to the Term Coordinator', note:'Total families + children who attended' },
-        { id:'v17', label:'Upload photos to the event\'s Drive folder', note:'Find the folder link on the Photo Archive page' },
-        { id:'v18', label:'Share feedback with the coordinator', note:'2–3 things that went well + 1 thing to improve' }
+        { id:'v17', label:'Upload photos to the event\'s Google Drive folder', note:'Find the folder link on the Photo Archive page' },
+        { id:'v18', label:'Share feedback with the coordinator', note:'1 thing that went well + 1 thing to improve' }
       ]
     }
   ]

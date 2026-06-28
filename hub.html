@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NegOr HS Hub — Community Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="tailwind.min.css" />
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(150deg, #FEF3EE 0%, #fff 55%, #fdf5ef 100%);
+      min-height: 100vh;
+    }
+    .module-card {
+      display: flex; flex-direction: column;
+      background: white; border-radius: 1.25rem;
+      border: 1px solid #f3f4f6;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+      overflow: hidden; transition: transform .18s, box-shadow .18s;
+    }
+    .module-card:hover { transform: translateY(-3px); box-shadow: 0 4px 20px rgba(181,69,27,.12); }
+    .module-card.coming { opacity: .6; pointer-events: none; }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: .875rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .badge-live {
+      display:inline-flex; align-items:center; gap:.25rem;
+      font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+      padding:.2rem .55rem; border-radius:999px;
+      background:#dcfce7; color:#15803d;
+    }
+    .badge-soon {
+      display:inline-flex; align-items:center; gap:.25rem;
+      font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em;
+      padding:.2rem .55rem; border-radius:999px;
+      background:#f3f4f6; color:#6b7280;
+    }
+    .btn-go {
+      display:inline-flex; align-items:center; justify-content:center; gap:.35rem;
+      width:100%; padding:.65rem 1rem;
+      border-radius:.75rem; font-size:.875rem; font-weight:600;
+      background:var(--t); color:#fff; border:none; cursor:pointer;
+      transition:background .15s;
+      text-decoration:none;
+    }
+    .btn-go:hover { background:var(--t-dk); }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HERO HEADER ═══ -->
+<div class="pt-12 pb-8 px-4 text-center">
+  <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md"
+       style="background:var(--t)">
+    <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+    </svg>
+  </div>
+  <h1 class="text-3xl font-extrabold" style="color:var(--t-dk)">NegOr HS Hub</h1>
+  <p class="text-gray-500 mt-1 text-sm">Negros Oriental Homeschool Community Portal</p>
+</div>
+
+<!-- ═══ MODULES GRID ═══ -->
+<div class="max-w-4xl mx-auto px-4 pb-16">
+
+  <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 text-center">Community Tools</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+    <!-- 1. Family Registration -->
+    <div class="module-card">
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:var(--t-lt)">🏠</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Family Registration</h3>
+        <p class="text-sm text-gray-500 leading-snug">Join the NegOr HS Hub community. Register your family, share your skills, and let us know your interests.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="index.html" class="btn-go">
+          Open Form
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- 2. Event Registration -->
+    <div class="module-card">
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fef3c7">📅</div>
+          <span class="badge-live">● Live</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Event Registration</h3>
+        <p class="text-sm text-gray-500 leading-snug">Sign up for quarterly huddles and special events. Confirm who's coming and complete your registration payment.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="event-registration.html" class="btn-go" style="background:#d97706">
+          Sign Up for Event
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- 3. Announcements (coming soon) -->
+    <div class="module-card coming">
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#f0fdf4">📢</div>
+          <span class="badge-soon">Coming Soon</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Announcements</h3>
+        <p class="text-sm text-gray-500 leading-snug">Stay updated with community news, reminders, and notices from the coordinating team.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <button class="btn-go" style="background:#9ca3af; cursor:not-allowed;">Coming Soon</button>
+      </div>
+    </div>
+
+    <!-- 4. Resource Library (coming soon) -->
+    <div class="module-card coming">
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#eff6ff">📚</div>
+          <span class="badge-soon">Coming Soon</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Resource Library</h3>
+        <p class="text-sm text-gray-500 leading-snug">Curriculum links, downloadable materials, and community-shared resources — all in one place.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <button class="btn-go" style="background:#9ca3af; cursor:not-allowed;">Coming Soon</button>
+      </div>
+    </div>
+
+    <!-- 5. Member Directory (coming soon) -->
+    <div class="module-card coming">
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fdf4ff">👨‍👩‍👧‍👦</div>
+          <span class="badge-soon">Coming Soon</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Member Directory</h3>
+        <p class="text-sm text-gray-500 leading-snug">Find and connect with other NegOr HS Hub families. Search by skills, location, or interests.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <button class="btn-go" style="background:#9ca3af; cursor:not-allowed;">Coming Soon</button>
+      </div>
+    </div>
+
+    <!-- 6. Admin (coordinator only) -->
+    <div class="module-card">
+      <div class="p-6 flex-1">
+        <div class="flex items-start justify-between mb-4">
+          <div class="card-icon" style="background:#fef2f2">🔐</div>
+          <span class="badge-soon">Admin Only</span>
+        </div>
+        <h3 class="font-bold text-gray-900 mb-1">Admin Dashboard</h3>
+        <p class="text-sm text-gray-500 leading-snug">For coordinators only. View registrations, manage family records, and access community data.</p>
+      </div>
+      <div class="px-6 pb-6">
+        <a href="admin.html" class="btn-go" style="background:#374151">
+          Admin Login
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <p class="text-center text-xs text-gray-400 mt-12">
+    NegOr HS Hub · Negros Oriental Homeschool Community ·
+    <a href="index.html" class="hover:underline" style="color:var(--t)">Register your family</a>
+  </p>
+</div>
+
+</body>
+</html>

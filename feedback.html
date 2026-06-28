@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Feedback — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="tailwind.min.css" />
+  <style>
+    :root {
+      --c:    #0891b2;
+      --c-dk: #0e7490;
+      --c-lt: #ecfeff;
+      --c-pal:#cffafe;
+    }
+    * { box-sizing: border-box; }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,#ecfeff 0%,#fff 55%,#f0fdff 100%); min-height:100vh; }
+
+    /* Form input base */
+    .field-label { font-size:.8rem; font-weight:600; color:#374151; margin-bottom:.4rem; display:block; }
+    .field-input {
+      width:100%; border:1.5px solid #e5e7eb; border-radius:.75rem;
+      padding:.65rem .9rem; font-size:.875rem; color:#111827; font-family:'Inter',sans-serif;
+      transition:border-color .15s, box-shadow .15s; background:#fff;
+    }
+    .field-input:focus { outline:none; border-color:var(--c); box-shadow:0 0 0 3px rgba(8,145,178,.1); }
+    textarea.field-input { resize:vertical; min-height:90px; }
+    select.field-input { appearance:none; cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right .75rem center; padding-right:2.5rem; }
+
+    /* Star rating */
+    .star-row { display:flex; gap:.35rem; }
+    .star-btn {
+      background:none; border:none; cursor:pointer;
+      font-size:1.8rem; line-height:1; padding:.1rem;
+      transition:transform .1s; color:#d1d5db;
+    }
+    .star-btn:hover, .star-btn.lit { color:#f59e0b; }
+    .star-btn:hover { transform:scale(1.15); }
+
+    /* Submit button */
+    .btn-submit {
+      width:100%; padding:.8rem 1rem; border-radius:.875rem; font-size:.95rem; font-weight:700;
+      background:var(--c); color:#fff; border:none; cursor:pointer; transition:background .15s;
+    }
+    .btn-submit:hover:not(:disabled) { background:var(--c-dk); }
+    .btn-submit:disabled { opacity:.6; cursor:not-allowed; }
+
+    /* Success card */
+    #success-card { display:none; }
+
+    /* Emoji radio options */
+    .emoji-option { display:flex; flex-direction:column; align-items:center; gap:.25rem;
+                    cursor:pointer; padding:.5rem .75rem; border-radius:.75rem; border:2px solid #e5e7eb;
+                    background:#fff; transition:all .15s; font-size:1.5rem; }
+    .emoji-option:hover { border-color:var(--c); background:var(--c-lt); }
+    .emoji-option input { display:none; }
+    .emoji-option.selected { border-color:var(--c); background:var(--c-lt); }
+    .emoji-label { font-size:.65rem; font-weight:600; color:#6b7280; text-align:center; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:1px solid var(--c-pal)">
+  <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div class="flex-1">
+      <p class="font-bold leading-none" style="color:var(--c)">Event Feedback</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · Post-Event Survey</p>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<div class="max-w-2xl mx-auto px-4 py-8 pb-16">
+
+  <!-- Intro -->
+  <div class="text-center mb-8">
+    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--c-lt)">
+      <span class="text-3xl">💬</span>
+    </div>
+    <h1 class="text-2xl font-extrabold" style="color:var(--c)">How was the event?</h1>
+    <p class="text-sm text-gray-500 mt-1">Your feedback helps us plan better huddles. Takes less than 2 minutes.</p>
+  </div>
+
+  <!-- ── FORM ── -->
+  <form id="feedback-form" onsubmit="submitFeedback(event)" class="space-y-6">
+
+    <!-- Event selector -->
+    <div>
+      <label class="field-label" for="event-select">Which event are you rating? <span class="text-red-400">*</span></label>
+      <select id="event-select" class="field-input" required>
+        <option value="">— Loading events… —</option>
+      </select>
+    </div>
+
+    <!-- Name (optional) -->
+    <div>
+      <label class="field-label" for="respondent-name">Your name <span class="text-gray-400 font-normal">(optional)</span></label>
+      <input id="respondent-name" type="text" class="field-input" placeholder="e.g. Maria Santos" autocomplete="name" />
+    </div>
+
+    <!-- Role -->
+    <div>
+      <label class="field-label">I attended as… <span class="text-red-400">*</span></label>
+      <div class="flex flex-wrap gap-2" id="role-options">
+        <label class="emoji-option" id="role-family">
+          <input type="radio" name="role" value="Family" required />
+          <span>👨‍👩‍👧</span>
+          <span class="emoji-label">Family</span>
+        </label>
+        <label class="emoji-option" id="role-volunteer">
+          <input type="radio" name="role" value="Huddle Volunteer" />
+          <span>🙋</span>
+          <span class="emoji-label">Huddle Volunteer</span>
+        </label>
+        <label class="emoji-option" id="role-coordinator">
+          <input type="radio" name="role" value="Term Coordinator" />
+          <span>🗂️</span>
+          <span class="emoji-label">Term Coordinator</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Star rating -->
+    <div>
+      <label class="field-label">Overall rating <span class="text-red-400">*</span></label>
+      <div class="star-row" id="star-row">
+        <button type="button" class="star-btn" data-val="1" onclick="setRating(1)">★</button>
+        <button type="button" class="star-btn" data-val="2" onclick="setRating(2)">★</button>
+        <button type="button" class="star-btn" data-val="3" onclick="setRating(3)">★</button>
+        <button type="button" class="star-btn" data-val="4" onclick="setRating(4)">★</button>
+        <button type="button" class="star-btn" data-val="5" onclick="setRating(5)">★</button>
+      </div>
+      <input type="hidden" id="rating-val" value="" />
+      <p id="rating-text" class="text-xs text-gray-400 mt-1">Tap a star</p>
+    </div>
+
+    <!-- What Went Well -->
+    <div>
+      <label class="field-label" for="went-well">What Went Well <span class="text-red-400">*</span></label>
+      <textarea id="went-well" class="field-input" placeholder="Please share any positive experiences, highlights, or aspects that worked well. Feel free to include anything you appreciated or found helpful." required maxlength="500"></textarea>
+    </div>
+
+    <!-- What Needs Improvement -->
+    <div>
+      <label class="field-label" for="to-improve">What Needs Improvement <span class="text-red-400">*</span></label>
+      <textarea id="to-improve" class="field-input" placeholder="Please share any suggestions, challenges, or areas where we can improve. Your honest feedback will help us make future activities and experiences better." required maxlength="500"></textarea>
+    </div>
+
+    <!-- Other Comments -->
+    <div>
+      <label class="field-label" for="comments">Other Comments <span class="text-gray-400 font-normal">(optional)</span></label>
+      <textarea id="comments" class="field-input" placeholder="Please share any additional thoughts, feedback, suggestions, or concerns that weren't covered in the previous questions. We'd love to hear anything else you'd like us to know." maxlength="1000"></textarea>
+    </div>
+
+    <!-- Error message -->
+    <div id="form-error" class="hidden rounded-xl px-4 py-3 text-sm font-medium text-red-700" style="background:#fef2f2; border:1px solid #fecaca"></div>
+
+    <!-- Submit -->
+    <button type="submit" id="submit-btn" class="btn-submit">Submit Feedback</button>
+
+  </form>
+
+  <!-- ── SUCCESS ── -->
+  <div id="success-card" class="text-center py-12 rounded-2xl mt-4" style="background:var(--c-lt); border:1px solid var(--c-pal)">
+    <div class="text-5xl mb-3">🎉</div>
+    <h2 class="text-xl font-extrabold mb-2" style="color:var(--c)">Thank you!</h2>
+    <p class="text-sm text-gray-600 mb-6">Your feedback has been submitted. It means a lot to our team.</p>
+    <a href="index.html"
+       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white"
+       style="background:var(--c)">← Back to Portal</a>
+  </div>
+
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-4 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-2xl mx-auto px-4 text-center">
+    <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
+    <p class="text-xs text-gray-300">💛 Portal created by Fibee</p>
+  </div>
+</footer>
+
+<script>
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbzqK95VnVUauW9oSRSW6mUTIaD5cxB0aCxMa2PwvxHgJKisM6dVbzJRUs8-YgtglbJhUA/exec';
+
+var selectedRating = 0;
+const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent!'];
+
+/* ─── STAR RATING ─── */
+function setRating(val) {
+  selectedRating = val;
+  document.getElementById('rating-val').value = val;
+  document.getElementById('rating-text').textContent = RATING_LABELS[val] || '';
+  var stars = document.querySelectorAll('.star-btn');
+  stars.forEach(function(s) {
+    s.classList.toggle('lit', parseInt(s.dataset.val) <= val);
+  });
+}
+
+/* ─── ROLE RADIO VISUAL ─── */
+document.querySelectorAll('input[name="role"]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.emoji-option').forEach(function(el) {
+      el.classList.remove('selected');
+    });
+    radio.closest('.emoji-option').classList.add('selected');
+  });
+});
+
+/* ─── LOAD EVENTS ─── */
+async function loadEvents() {
+  try {
+    var res  = await fetch(APPS_URL + '?action=getActiveEvents');
+    var data = await res.json();
+    var sel  = document.getElementById('event-select');
+    var events = (data.success && data.data) ? data.data : [];
+
+    // Also try getting past events (may not be active)
+    sel.innerHTML = '<option value="">— Select event —</option>';
+    if (events.length === 0) {
+      sel.innerHTML += '<option value="" disabled>No upcoming events found</option>';
+    } else {
+      events.forEach(function(ev) {
+        var opt = document.createElement('option');
+        opt.value       = ev['event_id'] || ev['id'] || '';
+        opt.textContent = (ev['event_title'] || 'Event') +
+                          (ev['event_date'] ? '  ·  ' + fmtDate(ev['event_date']) : '');
+        opt.dataset.title = ev['event_title'] || '';
+        sel.appendChild(opt);
+      });
+    }
+    // Allow free-text for past events not listed
+    sel.innerHTML += '<option value="__other__">Other / past event not listed</option>';
+  } catch(e) {
+    var sel = document.getElementById('event-select');
+    sel.innerHTML = '<option value="">— Could not load events —</option>' +
+                    '<option value="__other__">Other / past event not listed</option>';
+  }
+}
+
+document.getElementById('event-select').addEventListener('change', function() {
+  if (this.value === '__other__') {
+    var custom = prompt('Please enter the event name:');
+    if (custom) {
+      var opt = document.createElement('option');
+      opt.value = '__custom__:' + custom;
+      opt.textContent = custom;
+      this.appendChild(opt);
+      this.value = opt.value;
+    } else {
+      this.value = '';
+    }
+  }
+});
+
+/* ─── SUBMIT ─── */
+async function submitFeedback(e) {
+  e.preventDefault();
+
+  var errEl = document.getElementById('form-error');
+  errEl.classList.add('hidden');
+
+  // Validate rating
+  if (!selectedRating) {
+    errEl.textContent = 'Please select a star rating.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Gather role
+  var roleInput = document.querySelector('input[name="role"]:checked');
+  if (!roleInput) {
+    errEl.textContent = 'Please select how you attended.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  var sel = document.getElementById('event-select');
+  var eventId    = sel.value || '';
+  var eventTitle = sel.options[sel.selectedIndex]
+                     ? (sel.options[sel.selectedIndex].dataset.title || sel.options[sel.selectedIndex].textContent)
+                     : '';
+
+  if (eventId.startsWith('__custom__:')) {
+    eventTitle = eventId.replace('__custom__:', '');
+    eventId    = '';
+  }
+
+  var payload = {
+    _type:      'submitFeedback',
+    eventId:    eventId,
+    eventTitle: eventTitle,
+    name:       document.getElementById('respondent-name').value.trim(),
+    role:       roleInput.value,
+    rating:     selectedRating,
+    wentWell:   document.getElementById('went-well').value.trim(),
+    toImprove:  document.getElementById('to-improve').value.trim(),
+    comments:   document.getElementById('comments').value.trim(),
+    timestamp:  new Date().toISOString(),
+  };
+
+  var btn = document.getElementById('submit-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    var res  = await fetch(APPS_URL, {
+      method: 'POST',
+      body:   JSON.stringify(payload),
+    });
+    var data = await res.json();
+
+    if (data.success) {
+      document.getElementById('feedback-form').style.display = 'none';
+      document.getElementById('success-card').style.display  = 'block';
+    } else {
+      throw new Error(data.error || 'Submission failed');
+    }
+  } catch(err) {
+    errEl.textContent = 'Something went wrong: ' + err.message + '. Please try again.';
+    errEl.classList.remove('hidden');
+    btn.disabled    = false;
+    btn.textContent = 'Submit Feedback';
+  }
+}
+
+/* ─── HELPERS ─── */
+function fmtDate(d) {
+  if (!d) return '';
+  try {
+    var p = d.split('-');
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]) + ', ' + p[0];
+  } catch(e) { return d; }
+}
+
+/* ─── INIT ─── */
+loadEvents();
+</script>
+
+</body>
+</html>

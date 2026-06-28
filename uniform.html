@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>T-Shirt Order — NegOr HS Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+  <link rel="stylesheet" href="tailwind.min.css" />
+  <style>
+    :root {
+      --t:    #B5451B;
+      --t-dk: #8B3214;
+      --t-md: #D4714E;
+      --t-lt: #FEF3EE;
+      --t-pal:#F9DDD0;
+    }
+    body { font-family:'Inter',sans-serif; background:linear-gradient(150deg,var(--t-lt) 0%,#fff 55%,#fdf5ef 100%); min-height:100vh; }
+    .inp { width:100%; padding:.625rem 1rem; border:1px solid #d1d5db; border-radius:.625rem; font-size:.875rem; outline:none; background:white; transition:border-color .15s,box-shadow .15s; }
+    .inp:focus { border-color:var(--t); box-shadow:0 0 0 3px rgba(181,69,27,.12); }
+    select.inp { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right .75rem center; background-size:1rem; padding-right:2.5rem; }
+    .label { display:block; font-size:.78rem; font-weight:600; color:#374151; margin-bottom:.3rem; }
+    .btn-t { display:inline-flex; align-items:center; gap:.4rem; padding:.7rem 1.5rem; background:var(--t); color:#fff; border-radius:.75rem; font-size:.875rem; font-weight:700; border:none; cursor:pointer; transition:background .15s; }
+    .btn-t:hover { background:var(--t-dk); }
+    .btn-t:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-outline { display:inline-flex; align-items:center; gap:.3rem; padding:.5rem 1rem; background:#fff; border:1px solid #d1d5db; color:#374151; border-radius:.625rem; font-size:.8rem; font-weight:500; cursor:pointer; transition:background .15s; }
+    .btn-outline:hover { background:#f9fafb; }
+    .child-block { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1.25rem; position:relative; }
+    .shirt-card { border:2px solid #e5e7eb; border-radius:1rem; overflow:hidden; transition:border-color .2s; }
+    .shirt-card.mandatory { border-color:var(--t-pal); background:var(--t-lt); }
+    .shirt-card.optional  { border-color:#e5e7eb; background:#fafafa; }
+    .size-btn { padding:.35rem .7rem; border-radius:.5rem; border:1px solid #d1d5db; background:#fff; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .15s; color:#6b7280; }
+    .size-btn:hover { border-color:var(--t-md); color:var(--t); }
+    .size-btn.selected { background:var(--t); border-color:var(--t); color:#fff; }
+    .step-num { width:1.75rem; height:1.75rem; border-radius:50%; background:var(--t); color:#fff; font-size:.75rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .summary-row { display:flex; justify-content:space-between; align-items:center; padding:.4rem 0; border-bottom:1px solid #f3f4f6; font-size:.875rem; }
+    .summary-row:last-child { border-bottom:none; }
+    .file-drop { border:2px dashed #d1d5db; border-radius:.75rem; padding:1.5rem; text-align:center; cursor:pointer; transition:border-color .15s,background .15s; }
+    .file-drop:hover, .file-drop.dragover { border-color:var(--t); background:var(--t-lt); }
+    .badge { display:inline-block; padding:.2rem .6rem; border-radius:999px; font-size:.68rem; font-weight:700; }
+    .badge-mandatory { background:var(--t); color:#fff; }
+    .badge-optional  { background:#f1f5f9; color:#475569; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-white shadow-sm sticky top-0 z-20" style="border-bottom:2px solid var(--t-pal)">
+  <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html">
+      <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-9 w-auto object-contain flex-shrink-0"
+           onerror="this.style.display='none'" />
+    </a>
+    <div class="flex-1">
+      <p class="font-bold leading-none" style="color:var(--t)">T-Shirt Order Form</p>
+      <p class="text-xs text-gray-400">NegOr HS Hub · 2026 Community Uniform</p>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ LOGIN GATE (coordinator-only while testing) ═══ -->
+<div id="login-gate" class="max-w-md mx-auto px-4 py-16">
+  <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-7 text-center">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:var(--t-lt)">
+      <span class="text-3xl">🔒</span>
+    </div>
+    <h1 class="text-lg font-bold text-gray-900 mb-1">Coordinator Access</h1>
+    <p class="text-sm text-gray-500 mb-5">The T-Shirt Order Form is in testing and is open to coordinators only for now.</p>
+    <div class="text-left">
+      <label class="block text-xs font-medium text-gray-600 mb-1">Coordinator Access Token</label>
+      <input id="gate-token" type="password" placeholder="Paste your coordinator token"
+             onkeydown="if(event.key==='Enter')unlock()"
+             class="inp mb-3" />
+      <button onclick="unlock()" id="gate-btn" class="btn-t w-full justify-center">Unlock Form</button>
+      <p id="gate-error" class="hidden text-xs text-red-500 mt-2 text-center">Invalid token. Please try again.</p>
+      <p class="text-xs text-gray-400 mt-3 text-center">Or add <code class="bg-gray-100 px-1 rounded">?token=YOUR_TOKEN</code> to the URL.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div id="app-content" class="hidden">
+<div class="max-w-2xl mx-auto px-4 pt-8 pb-2 text-center">
+  <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:var(--t-lt)">
+    <span class="text-3xl">👕</span>
+  </div>
+  <h1 class="text-2xl font-extrabold" style="color:var(--t)">2026 NHH T-Shirt Order</h1>
+  <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">Show your support and represent our community! Fill out this form to place your uniform order.</p>
+</div>
+
+<!-- ═══ SHIRT PREVIEW ═══ -->
+<div class="max-w-2xl mx-auto px-4 py-5">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+    <!-- Mandatory -->
+    <div class="shirt-card mandatory p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="badge badge-mandatory">MANDATORY</span>
+        <span class="text-lg font-extrabold" style="color:var(--t)">₱450</span>
+      </div>
+      <p class="font-bold text-gray-900 text-sm mb-0.5">NHH Orange Shirt</p>
+      <p class="text-xs text-gray-500">Special Fabric · "The world is our classroom"</p>
+      <div class="mt-3 rounded-lg overflow-hidden bg-white/60 flex items-center justify-center h-28">
+        <span class="text-5xl">🟧</span>
+      </div>
+      <p class="text-xs text-center mt-2 font-medium" style="color:var(--t)">Required for every child</p>
+    </div>
+
+    <!-- Optional -->
+    <div class="shirt-card optional p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="badge badge-optional">OPTIONAL</span>
+        <span class="text-lg font-extrabold text-gray-700">₱350</span>
+      </div>
+      <p class="font-bold text-gray-900 text-sm mb-0.5">NHH Cream Shirt</p>
+      <p class="text-xs text-gray-500">180 GSM Polydex · "I am fearfully and wonderfully made"</p>
+      <div class="mt-3 rounded-lg overflow-hidden bg-white/80 flex items-center justify-center h-28">
+        <span class="text-5xl">⬜</span>
+      </div>
+      <p class="text-xs text-center mt-2 text-gray-400">Add-on · Psalm 139:14</p>
+    </div>
+  </div>
+
+  <!-- Size chart toggle -->
+  <div class="mt-3">
+    <button onclick="toggleSizeChart()" class="text-xs font-semibold underline" style="color:var(--t); background:none; border:none; cursor:pointer;">
+      📏 View Kids Size Chart
+    </button>
+    <div id="size-chart" class="hidden mt-3 rounded-xl overflow-hidden border border-gray-200">
+      <table class="w-full text-xs">
+        <thead>
+          <tr style="background:var(--t); color:#fff;">
+            <th class="py-2 px-3 text-left font-semibold">Size</th>
+            <th class="py-2 px-3 text-center font-semibold">Width (in)</th>
+            <th class="py-2 px-3 text-center font-semibold">Height (in)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="bg-white"><td class="py-1.5 px-3 font-semibold">Kids 10</td><td class="text-center text-gray-600">12.4</td><td class="text-center text-gray-600">16.47</td></tr>
+          <tr class="bg-gray-50"><td class="py-1.5 px-3 font-semibold">Kids 12</td><td class="text-center text-gray-600">13.4</td><td class="text-center text-gray-600">17.47</td></tr>
+          <tr class="bg-white"><td class="py-1.5 px-3 font-semibold">Kids 14</td><td class="text-center text-gray-600">14.4</td><td class="text-center text-gray-600">18.47</td></tr>
+          <tr class="bg-gray-50"><td class="py-1.5 px-3 font-semibold">Kids 16</td><td class="text-center text-gray-600">15.4</td><td class="text-center text-gray-600">19.47</td></tr>
+          <tr class="bg-white"><td class="py-1.5 px-3 font-semibold">Kids 18</td><td class="text-center text-gray-600">15.4</td><td class="text-center text-gray-600">20.47</td></tr>
+          <tr class="bg-gray-50"><td class="py-1.5 px-3 font-semibold">Kids 20</td><td class="text-center text-gray-600">16.4</td><td class="text-center text-gray-600">21.47</td></tr>
+          <tr class="bg-white"><td class="py-1.5 px-3 font-semibold">Kids 21</td><td class="text-center text-gray-600">17.4</td><td class="text-center text-gray-600">22.47</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FORM ═══ -->
+<div class="max-w-2xl mx-auto px-4 pb-16 space-y-6">
+
+  <!-- Step 1: Family Info -->
+  <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="step-num">1</div>
+      <p class="font-bold text-gray-800">Family Information</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="label">Family Name <span class="text-red-500">*</span></label>
+        <input id="family-name" type="text" class="inp" placeholder="e.g., dela Cruz Family" />
+      </div>
+      <div>
+        <label class="label">Parent / Guardian Name <span class="text-red-500">*</span></label>
+        <input id="parent-name" type="text" class="inp" placeholder="Your full name" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Children Orders -->
+  <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="step-num">2</div>
+      <p class="font-bold text-gray-800">Children's Orders</p>
+    </div>
+    <p class="text-xs text-gray-500 mb-4 -mt-1">Each child must order the <strong>Mandatory (orange)</strong> shirt. The <strong>Optional (cream)</strong> shirt is add-on.</p>
+
+    <div id="children-container" class="space-y-4"></div>
+
+    <button onclick="addChild()" class="btn-outline mt-4 w-full justify-center">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+      </svg>
+      Add Another Child
+    </button>
+  </div>
+
+  <!-- Step 3: Order Summary -->
+  <div id="summary-section" class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="step-num">3</div>
+      <p class="font-bold text-gray-800">Order Summary</p>
+    </div>
+    <div id="summary-body" class="space-y-1 text-gray-600">
+      <p class="text-sm text-gray-400 text-center py-2">Add children above to see your total.</p>
+    </div>
+  </div>
+
+  <!-- Step 4: Payment -->
+  <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="step-num">4</div>
+      <p class="font-bold text-gray-800">Payment</p>
+    </div>
+    <div class="rounded-xl p-4 mb-4 text-sm" style="background:var(--t-lt); border:1px solid var(--t-pal)">
+      <p class="font-bold mb-2" style="color:var(--t)">Pay via GCash</p>
+      <p class="text-gray-700 mb-1">📱 <strong>0917 793 5003</strong></p>
+      <p class="text-gray-700">or scan the <a href="https://bit.ly/GCASH_QR_Code" target="_blank" rel="noopener" class="font-semibold underline" style="color:var(--t)">GCash QR Code</a></p>
+      <p class="text-xs text-gray-500 mt-2">Please double-check your grand total before paying.</p>
+    </div>
+
+    <label class="label">Proof of Payment <span class="text-red-500">*</span></label>
+    <div id="proof-drop" class="file-drop" onclick="document.getElementById('proof-input').click()"
+         ondragover="event.preventDefault(); this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleProofDrop(event)">
+      <div id="proof-placeholder">
+        <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <p class="text-sm text-gray-500">Click or drag your GCash screenshot here</p>
+        <p class="text-xs text-gray-400 mt-1">JPG, PNG or PDF · Make sure amount and name are visible</p>
+      </div>
+      <div id="proof-preview" class="hidden">
+        <img id="proof-img" src="" alt="Payment proof" class="max-h-40 mx-auto rounded-lg object-contain" />
+        <p id="proof-filename" class="text-xs text-gray-500 mt-2 text-center"></p>
+        <button onclick="clearProof(event)" class="text-xs text-red-500 hover:underline mt-1 block mx-auto">Remove</button>
+      </div>
+    </div>
+    <input id="proof-input" type="file" accept="image/*,application/pdf" class="hidden" onchange="handleProofSelect(this)" />
+  </div>
+
+  <!-- Submit -->
+  <div>
+    <button id="submit-btn" onclick="submitOrder()" class="btn-t w-full justify-center text-base py-3.5">
+      Submit My Order
+    </button>
+    <p class="text-xs text-gray-400 text-center mt-2">Please review your order carefully before submitting.</p>
+  </div>
+
+  <!-- Success -->
+  <div id="success-msg" class="hidden rounded-2xl p-6 text-center" style="background:var(--t-lt); border:2px solid var(--t-pal)">
+    <div class="text-4xl mb-3">🎉</div>
+    <p class="font-bold text-lg mb-1" style="color:var(--t)">Order Submitted!</p>
+    <p class="text-sm text-gray-600 mb-1">Thank you for ordering your community shirt!</p>
+    <p id="success-order-id" class="text-xs font-mono text-gray-500"></p>
+    <p class="text-xs text-gray-500 mt-3">A coordinator will confirm your payment soon. See you in your NHH shirt! 👕</p>
+  </div>
+
+</div>
+</div><!-- /app-content -->
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="mt-4 py-8 border-t border-gray-100 bg-white">
+  <div class="max-w-2xl mx-auto px-4 text-center">
+    <img src="logo.webp" alt="NegOr Homeschoolers Hub" class="h-10 mx-auto mb-3 object-contain"
+         onerror="this.style.display='none'" />
+    <p class="text-xs text-gray-400 mb-1">Negros Oriental Homeschoolers Hub · Est. 2023</p>
+    <p class="text-xs text-gray-300 mb-3">💛 Portal created by Fibee</p>
+    <div class="flex items-center justify-center gap-6 text-xs">
+      <a href="https://www.facebook.com/groups/negorhshubofficial" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        NegOr HS Hub Official
+      </a>
+      <a href="https://www.instagram.com/negorhshub" target="_blank" rel="noopener"
+         class="flex items-center gap-1.5 text-gray-500 hover:text-[#B5451B] transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        @negorhshub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqK95VnVUauW9oSRSW6mUTIaD5cxB0aCxMa2PwvxHgJKisM6dVbzJRUs8-YgtglbJhUA/exec';
+const SIZES = ['Kids 10','Kids 12','Kids 14','Kids 16','Kids 18','Kids 20','Kids 21'];
+const PRICE_MANDATORY = 450;
+const PRICE_OPTIONAL  = 350;
+
+let childCount  = 0;
+let proofFile   = null;
+let proofBase64 = '';
+let coordToken  = '';
+
+// ── COORDINATOR GATE (testing only) ──────────────────────────
+async function unlock() {
+  const input = document.getElementById('gate-token');
+  const btn   = document.getElementById('gate-btn');
+  const err   = document.getElementById('gate-error');
+  const token = (input.value || '').trim();
+  if (!token) { err.textContent = 'Please enter your coordinator token.'; err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  let ok = false;
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=verifyCoordinator&token=' + encodeURIComponent(token));
+    const data = await res.json();
+    ok = !!data.success;
+  } catch(e) { ok = false; }
+  if (ok) {
+    coordToken = token;
+    document.getElementById('login-gate').classList.add('hidden');
+    document.getElementById('app-content').classList.remove('hidden');
+  } else {
+    err.textContent = 'Invalid token. Please try again.';
+    err.classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Unlock Form';
+  }
+}
+
+// Auto-unlock if a token is supplied in the URL (?token=...)
+document.addEventListener('DOMContentLoaded', function() {
+  const t = new URLSearchParams(location.search).get('token');
+  if (t) { document.getElementById('gate-token').value = t; unlock(); }
+});
+
+// ── CHILDREN ─────────────────────────────────────────────────
+
+function addChild() {
+  childCount++;
+  const idx = childCount;
+  const div = document.createElement('div');
+  div.className = 'child-block';
+  div.id = 'child-' + idx;
+  div.innerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <p class="font-semibold text-gray-800 text-sm">Child ${idx}</p>
+      ${idx > 1 ? `<button onclick="removeChild(${idx})" class="text-xs text-red-400 hover:text-red-600 transition">✕ Remove</button>` : ''}
+    </div>
+
+    <div class="mb-3">
+      <label class="label">Child's Nickname <span class="text-red-500">*</span></label>
+      <input id="nick-${idx}" type="text" class="inp" placeholder="e.g., Bea" />
+    </div>
+
+    <!-- Mandatory -->
+    <div class="rounded-xl p-3 mb-3" style="background:var(--t-lt); border:1px solid var(--t-pal)">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-bold" style="color:var(--t)">🟧 Mandatory Shirt · ₱${PRICE_MANDATORY}</p>
+        <span class="text-xs text-gray-500 font-medium">Required</span>
+      </div>
+      <label class="label">Size <span class="text-red-500">*</span></label>
+      <div class="flex flex-wrap gap-1.5" id="mand-sizes-${idx}">
+        ${SIZES.map(s => `<button type="button" class="size-btn" onclick="selectSize('mand',${idx},'${s}')">${s}</button>`).join('')}
+      </div>
+      <input type="hidden" id="mand-size-${idx}" value="" />
+    </div>
+
+    <!-- Optional -->
+    <div class="rounded-xl p-3" style="background:#fafafa; border:1px solid #e5e7eb">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-bold text-gray-700">⬜ Optional Shirt · ₱${PRICE_OPTIONAL}</p>
+        <span class="text-xs text-gray-400">Optional add-on</span>
+      </div>
+      <label class="label">Size</label>
+      <div class="flex flex-wrap gap-1.5" id="opt-sizes-${idx}">
+        <button type="button" class="size-btn selected" id="opt-none-${idx}" onclick="clearOptSize(${idx})">None</button>
+        ${SIZES.map(s => `<button type="button" class="size-btn" onclick="selectOptSize(${idx},'${s}')">${s}</button>`).join('')}
+      </div>
+      <input type="hidden" id="opt-size-${idx}" value="" />
+    </div>
+  `;
+  document.getElementById('children-container').appendChild(div);
+  updateSummary();
+}
+
+function removeChild(idx) {
+  const el = document.getElementById('child-' + idx);
+  if (el) el.remove();
+  updateSummary();
+}
+
+function selectSize(type, idx, size) {
+  const container = document.getElementById(type + '-sizes-' + idx);
+  container.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  document.getElementById(type + '-size-' + idx).value = size;
+  updateSummary();
+}
+
+function selectOptSize(idx, size) {
+  const container = document.getElementById('opt-sizes-' + idx);
+  container.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+  // find and click the right btn
+  container.querySelectorAll('.size-btn').forEach(b => {
+    if (b.textContent.trim() === size) b.classList.add('selected');
+  });
+  document.getElementById('opt-size-' + idx).value = size;
+  updateSummary();
+}
+
+function clearOptSize(idx) {
+  const container = document.getElementById('opt-sizes-' + idx);
+  container.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('opt-none-' + idx).classList.add('selected');
+  document.getElementById('opt-size-' + idx).value = '';
+  updateSummary();
+}
+
+// ── SUMMARY ──────────────────────────────────────────────────
+
+function getActiveChildren() {
+  const children = [];
+  for (let i = 1; i <= childCount; i++) {
+    const el = document.getElementById('child-' + i);
+    if (!el) continue;
+    children.push({
+      idx:           i,
+      nickname:      (document.getElementById('nick-' + i)?.value || '').trim(),
+      mandatorySize: document.getElementById('mand-size-' + i)?.value || '',
+      optionalSize:  document.getElementById('opt-size-' + i)?.value  || '',
+    });
+  }
+  return children;
+}
+
+function updateSummary() {
+  const children = getActiveChildren();
+  const body = document.getElementById('summary-body');
+
+  if (children.length === 0) {
+    body.innerHTML = '<p class="text-sm text-gray-400 text-center py-2">Add children above to see your total.</p>';
+    return;
+  }
+
+  let mandTotal = 0, optTotal = 0;
+  let rows = '';
+
+  children.forEach(c => {
+    const nick  = c.nickname || ('Child ' + c.idx);
+    const mSize = c.mandatorySize || '—';
+    const oSize = c.optionalSize;
+    mandTotal += PRICE_MANDATORY;
+    if (oSize) optTotal += PRICE_OPTIONAL;
+
+    rows += `<div class="summary-row">
+      <span class="text-gray-700">${nick}</span>
+      <span class="text-xs text-gray-500">
+        🟧 ${mSize}${oSize ? ' &nbsp;⬜ ' + oSize : ''}
+      </span>
+    </div>`;
+  });
+
+  const grand = mandTotal + optTotal;
+
+  body.innerHTML = rows +
+    `<div class="mt-3 pt-3 border-t-2 border-gray-200 space-y-1">
+      <div class="summary-row"><span class="text-gray-600">Mandatory shirts (${children.length} × ₱${PRICE_MANDATORY})</span><span class="font-semibold">₱${mandTotal.toLocaleString()}</span></div>
+      ${optTotal > 0 ? `<div class="summary-row"><span class="text-gray-600">Optional shirts (${children.filter(c=>c.optionalSize).length} × ₱${PRICE_OPTIONAL})</span><span class="font-semibold">₱${optTotal.toLocaleString()}</span></div>` : ''}
+      <div class="summary-row border-t border-gray-200 pt-2 mt-1">
+        <span class="font-bold text-gray-900 text-base">GRAND TOTAL</span>
+        <span class="font-extrabold text-lg" style="color:var(--t)">₱${grand.toLocaleString()}</span>
+      </div>
+    </div>`;
+}
+
+// ── PROOF OF PAYMENT ─────────────────────────────────────────
+
+function handleProofSelect(input) {
+  if (input.files && input.files[0]) processProofFile(input.files[0]);
+}
+
+function handleProofDrop(e) {
+  e.preventDefault();
+  document.getElementById('proof-drop').classList.remove('dragover');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) processProofFile(e.dataTransfer.files[0]);
+}
+
+function processProofFile(file) {
+  proofFile = file;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    proofBase64 = ev.target.result;
+    document.getElementById('proof-placeholder').classList.add('hidden');
+    document.getElementById('proof-preview').classList.remove('hidden');
+    const img = document.getElementById('proof-img');
+    if (file.type.startsWith('image/')) {
+      img.src = ev.target.result;
+      img.classList.remove('hidden');
+    } else {
+      img.classList.add('hidden');
+    }
+    document.getElementById('proof-filename').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearProof(e) {
+  e.stopPropagation();
+  proofFile = null; proofBase64 = '';
+  document.getElementById('proof-input').value = '';
+  document.getElementById('proof-placeholder').classList.remove('hidden');
+  document.getElementById('proof-preview').classList.add('hidden');
+}
+
+// ── SUBMIT ───────────────────────────────────────────────────
+
+async function submitOrder() {
+  const familyName = document.getElementById('family-name').value.trim();
+  const parentName = document.getElementById('parent-name').value.trim();
+  if (!familyName) return alert('⚠️ Please enter your family name.');
+  if (!parentName) return alert('⚠️ Please enter the parent/guardian name.');
+
+  const children = getActiveChildren();
+  if (children.length === 0) return alert('⚠️ Please add at least one child.');
+
+  for (const c of children) {
+    const nick = c.nickname || ('Child ' + c.idx);
+    if (!c.mandatorySize) return alert('⚠️ Please select a mandatory shirt size for ' + nick + '.');
+  }
+
+  if (!proofBase64) return alert('⚠️ Please upload your proof of payment.');
+
+  const mandTotal = children.length * PRICE_MANDATORY;
+  const optTotal  = children.filter(c => c.optionalSize).length * PRICE_OPTIONAL;
+  const grandTotal = mandTotal + optTotal;
+
+  const raw = proofBase64.includes(',') ? proofBase64.split(',')[1] : proofBase64;
+  const mimeType = proofFile ? proofFile.type : 'image/jpeg';
+
+  const payload = {
+    _type:             'addUniformOrder',
+    _token:            coordToken,
+    familyName,
+    parentName,
+    children:          children.map(c => ({
+      nickname:      c.nickname,
+      mandatorySize: c.mandatorySize,
+      optionalSize:  c.optionalSize || '',
+    })),
+    mandatorySubtotal: mandTotal,
+    optionalSubtotal:  optTotal,
+    grandTotal,
+    paymentProof: { base64: raw, mimeType, name: '' },
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('submit-btn').classList.add('hidden');
+      document.getElementById('success-msg').classList.remove('hidden');
+      document.getElementById('success-order-id').textContent = 'Order ID: ' + data.orderId;
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    } else {
+      alert('Error: ' + (data.error || 'Could not submit order.'));
+      btn.disabled = false; btn.textContent = 'Submit My Order';
+    }
+  } catch(e) {
+    alert('Network error: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Submit My Order';
+  }
+}
+
+// ── SIZE CHART TOGGLE ─────────────────────────────────────────
+function toggleSizeChart() {
+  document.getElementById('size-chart').classList.toggle('hidden');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+addChild(); // start with one child slot
+</script>
+
+</body>
+</html>
