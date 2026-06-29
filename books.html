@@ -40,7 +40,7 @@
     .badge-borrowed { background:#fef9c3; color:#a16207; }
     .book-row { background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1rem 1.25rem; box-shadow:0 1px 3px rgba(0,0,0,.04); transition:box-shadow .15s; }
     .book-row:hover { box-shadow:0 3px 12px rgba(22,163,74,.1); }
-    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:1rem; }
     .modal-box { background:white; border-radius:1.25rem; width:100%; max-width:460px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2); }
     .search-wrap { position:relative; }
     .search-wrap input { padding-left:2.25rem; }
@@ -532,6 +532,7 @@ function filterBooks() {
 function openBorrowModal(bookId) {
   const book = allBooks.find(b => b['book_id'] === bookId);
   if (!book) return;
+  closeAllModals();
   activeBorrowBookId = bookId;
   document.getElementById('borrow-book-title').textContent = book['title'];
   document.getElementById('borrow-owner-name').textContent = book['owner_name'] || 'the owner';
@@ -580,6 +581,7 @@ async function confirmBorrow() {
 function openReturnModal(bookId) {
   const book = allBooks.find(b => b['book_id'] === bookId);
   if (!book) return;
+  closeAllModals();
   activeReturnBookId = bookId;
   document.getElementById('return-book-title').textContent = book['title'];
   document.getElementById('return-modal').classList.remove('hidden');
@@ -610,6 +612,7 @@ async function confirmReturn() {
 // ── ADD BOOK ──────────────────────────────────────────────────
 
 function openAddBookModal() {
+  closeAllModals();
   ['ab-title','ab-author','ab-owner','ab-messenger','ab-notes'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -659,6 +662,7 @@ async function saveBook() {
 function openEditBookModal(bookId) {
   const book = allBooks.find(b => b['book_id'] === bookId);
   if (!book) return;
+  closeAllModals();
   activeEditBookId = bookId;
   document.getElementById('eb-title').value     = book['title']     || '';
   document.getElementById('eb-author').value    = book['author']    || '';
@@ -711,6 +715,7 @@ async function saveEditBook() {
 function openDeleteModal(bookId) {
   const book = allBooks.find(b => b['book_id'] === bookId);
   if (!book) return;
+  closeAllModals();
   activeDeleteBookId = bookId;
   document.getElementById('delete-book-title').textContent = book['title'];
   document.getElementById('delete-modal').classList.remove('hidden');
@@ -736,6 +741,18 @@ async function confirmDelete() {
     } else { alert('Error: ' + (data.error || 'Could not delete book.')); }
   } catch(e) { alert('Network error: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = 'Yes, Remove Book'; }
+}
+
+// ── CLOSE ALL MODALS ──────────────────────────────────────────
+
+function closeAllModals() {
+  ['borrow-modal','return-modal','add-book-modal','edit-book-modal','delete-modal'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
+  activeBorrowBookId = null;
+  activeReturnBookId = null;
+  activeEditBookId   = null;
+  activeDeleteBookId = null;
 }
 
 // ── CLOSE ON BACKDROP ─────────────────────────────────────────

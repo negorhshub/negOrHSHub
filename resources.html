@@ -52,7 +52,7 @@
     .badge-repair   { background:#fee2e2; color:#dc2626; }
 
     /* Modal */
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:50; display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:9999; display:flex; align-items:center; justify-content:center; padding:1rem; }
     .modal-box { background:#fff; border-radius:1.25rem; width:100%; max-width:32rem; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2); }
   </style>
 </head>
@@ -94,6 +94,7 @@
     <button class="tab-btn active" id="tab-venues"     onclick="switchTab('venues')">🏛️ Venues</button>
     <button class="tab-btn"        id="tab-equipment"  onclick="switchTab('equipment')">🔧 Equipment</button>
     <button class="tab-btn"        id="tab-activities" onclick="switchTab('activities')">📋 Activity Log</button>
+
   </div>
 </div>
 
@@ -401,9 +402,10 @@ var FORMS = {
 };
 
 function openAddModal(type) {
+  type = type || currentTab;
   currentType = type;
   var f = FORMS[type];
-  if (!f) return;
+  if (!f) { console.error('openAddModal: unknown type', type); return; }
   document.getElementById('modal-title').textContent = f.title;
   document.getElementById('modal-body').innerHTML = f.fields.map(function(field) {
     var input = '';
